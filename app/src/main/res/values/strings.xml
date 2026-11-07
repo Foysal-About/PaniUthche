@@ -1,0 +1,65 @@
+<resources>
+    <string name="app_name">Pani Uthche</string>
+    <string name="lang_toggle">বাংলা</string>
+
+    <!-- Navigation -->
+    <string name="nav_forecast">Forecast</string>
+    <string name="nav_sos">Emergency SOS</string>
+
+    <!-- Forecast -->
+    <string name="app_subtitle">River flood forecast</string>
+    <string name="refresh">Refresh</string>
+    <string name="next_7_days">Next 7 days</string>
+    <string name="risk_high">High risk</string>
+    <string name="risk_medium">Medium risk</string>
+    <string name="risk_low">Low risk</string>
+    <string name="advice_high">High flood risk. Get ready to move your family and livestock to the nearest shelter.</string>
+    <string name="advice_medium">Water may rise. Keep documents, medicine and dry food on high ground.</string>
+    <string name="advice_low">No flood expected now. Keep checking the forecast.</string>
+    <string name="stat_peak_flow">Peak flow</string>
+    <string name="stat_peak_day">Likely day</string>
+    <string name="stat_vs_normal">Of normal</string>
+    <string name="chart_title">River flow trend</string>
+    <string name="legend_past">Last 90 days</string>
+    <string name="legend_forecast">16-day forecast</string>
+    <string name="disclaimer">This is not an official warning. Follow FFWC and Bangladesh Meteorological Department guidance. Source: GloFAS (Copernicus).</string>
+    <string name="error_title">Couldn\'t load forecast</string>
+    <string name="network_error">Network problem</string>
+    <string name="retry">Try again</string>
+
+    <string name="district_sylhet">Sylhet</string>
+    <string name="district_sunamganj">Sunamganj</string>
+    <string name="district_kurigram">Kurigram</string>
+    <string name="district_feni">Feni</string>
+    <string name="district_sirajganj">Sirajganj</string>
+
+    <string-array name="months">
+        <item>January</item><item>February</item><item>March</item><item>April</item>
+        <item>May</item><item>June</item><item>July</item><item>August</item>
+        <item>September</item><item>October</item><item>November</item><item>December</item>
+    </string-array>
+
+    <!-- SOS -->
+    <string name="sos_title">Emergency SOS</string>
+    <string name="sos_subtitle">Messages spread through nearby phones, no internet needed.</string>
+    <string name="mesh_off">Off</string>
+    <string name="mesh_searching">On — searching for nearby phones</string>
+    <string name="mesh_error">Error: %1$s</string>
+    <string name="connected_phones">Connected phones: %1$s</string>
+    <string name="perm_denied">SOS can\'t work without Bluetooth and Location permission.</string>
+    <string name="people_count">Number of people</string>
+    <string name="increase">Increase</string>
+    <string name="special_needs">Special help needed</string>
+    <string name="elderly">Elderly</string>
+    <string name="children">Children</string>
+    <string name="pregnant">Pregnant</string>
+    <string name="note_label">Location / details</string>
+    <string name="note_placeholder">e.g. on the school roof, water waist-deep</string>
+    <string name="sos_press">Press</string>
+    <string name="sos_enable_hint">Turn on the network first to send SOS</string>
+    <string name="received_messages">Received messages (%1$s)</string>
+    <string name="no_messages">No messages yet</string>
+    <string name="people_stuck">%1$s people stuck</string>
+    <string name="sent_from_here">Sent from this phone</string>
+    <string name="hops_away">Came %1$s hops away</string>
+</resources>

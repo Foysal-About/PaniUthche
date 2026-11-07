@@ -1,0 +1,65 @@
+<resources>
+    <string name="app_name">পানি উঠছে</string>
+    <string name="lang_toggle">English</string>
+
+    <!-- Navigation -->
+    <string name="nav_forecast">পূর্বাভাস</string>
+    <string name="nav_sos">জরুরি SOS</string>
+
+    <!-- Forecast -->
+    <string name="app_subtitle">নদীর বন্যা পূর্বাভাস</string>
+    <string name="refresh">আবার লোড করুন</string>
+    <string name="next_7_days">আগামী ৭ দিন</string>
+    <string name="risk_high">উচ্চ ঝুঁকি</string>
+    <string name="risk_medium">মাঝারি ঝুঁকি</string>
+    <string name="risk_low">কম ঝুঁকি</string>
+    <string name="advice_high">বন্যার উচ্চ আশঙ্কা। পরিবার ও গবাদিপশু নিয়ে নিকটস্থ আশ্রয়কেন্দ্রে যাওয়ার প্রস্তুতি নিন।</string>
+    <string name="advice_medium">পানি বাড়তে পারে। জরুরি কাগজপত্র, ওষুধ ও শুকনো খাবার উঁচু জায়গায় রাখুন।</string>
+    <string name="advice_low">এখন বন্যার আশঙ্কা নেই। নিয়মিত পূর্বাভাসে নজর রাখুন।</string>
+    <string name="stat_peak_flow">সর্বোচ্চ প্রবাহ</string>
+    <string name="stat_peak_day">সম্ভাব্য দিন</string>
+    <string name="stat_vs_normal">স্বাভাবিকের</string>
+    <string name="chart_title">নদীপ্রবাহের গতিপথ</string>
+    <string name="legend_past">গত ৯০ দিন</string>
+    <string name="legend_forecast">১৬ দিনের পূর্বাভাস</string>
+    <string name="disclaimer">এটি সরকারি সতর্কবার্তা নয়। FFWC ও আবহাওয়া অধিদপ্তরের নির্দেশনা মেনে চলুন। তথ্যসূত্র: GloFAS (Copernicus)।</string>
+    <string name="error_title">পূর্বাভাস আনা যায়নি</string>
+    <string name="network_error">নেটওয়ার্ক সমস্যা</string>
+    <string name="retry">আবার চেষ্টা করুন</string>
+
+    <string name="district_sylhet">সিলেট</string>
+    <string name="district_sunamganj">সুনামগঞ্জ</string>
+    <string name="district_kurigram">কুড়িগ্রাম</string>
+    <string name="district_feni">ফেনী</string>
+    <string name="district_sirajganj">সিরাজগঞ্জ</string>
+
+    <string-array name="months">
+        <item>জানুয়ারি</item><item>ফেব্রুয়ারি</item><item>মার্চ</item><item>এপ্রিল</item>
+        <item>মে</item><item>জুন</item><item>জুলাই</item><item>আগস্ট</item>
+        <item>সেপ্টেম্বর</item><item>অক্টোবর</item><item>নভেম্বর</item><item>ডিসেম্বর</item>
+    </string-array>
+
+    <!-- SOS -->
+    <string name="sos_title">জরুরি SOS</string>
+    <string name="sos_subtitle">ইন্টারনেট ছাড়াই কাছের ফোনের মাধ্যমে বার্তা ছড়িয়ে যায়।</string>
+    <string name="mesh_off">বন্ধ</string>
+    <string name="mesh_searching">চালু — কাছের ফোন খুঁজছে</string>
+    <string name="mesh_error">সমস্যা: %1$s</string>
+    <string name="connected_phones">সংযুক্ত ফোন: %1$s</string>
+    <string name="perm_denied">Bluetooth ও Location অনুমতি ছাড়া SOS কাজ করবে না।</string>
+    <string name="people_count">কতজন মানুষ</string>
+    <string name="increase">বাড়ান</string>
+    <string name="special_needs">বিশেষ সহায়তা প্রয়োজন</string>
+    <string name="elderly">বয়স্ক</string>
+    <string name="children">শিশু</string>
+    <string name="pregnant">গর্ভবতী</string>
+    <string name="note_label">অবস্থান / বিবরণ</string>
+    <string name="note_placeholder">যেমন: স্কুলের ছাদে, পানি কোমর পর্যন্ত</string>
+    <string name="sos_press">চাপ দিন</string>
+    <string name="sos_enable_hint">SOS পাঠাতে আগে নেটওয়ার্ক চালু করুন</string>
+    <string name="received_messages">প্রাপ্ত বার্তা (%1$s)</string>
+    <string name="no_messages">এখনো কোনো বার্তা নেই</string>
+    <string name="people_stuck">%1$s জন আটকে আছে</string>
+    <string name="sent_from_here">এই ফোন থেকে পাঠানো</string>
+    <string name="hops_away">%1$s ধাপ দূর থেকে এসেছে</string>
+</resources>

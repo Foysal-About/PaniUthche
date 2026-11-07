@@ -1,0 +1,5 @@
+earthengine-api
+scikit-learn
+pandas
+matplotlib
+requests
