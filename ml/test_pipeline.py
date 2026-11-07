@@ -5,7 +5,7 @@ import numpy as np
 import pandas as pd
 
 import config as C
-from forecast import cell_polygon, lattice, nearest_lattice, rain_trigger, rain_windows, river_trigger
+from forecast import cell_polygon, lattice, nearest_lattice, rain_trigger, rain_windows, return_levels, river_trigger
 from train import evaluate, fit, split_by_event
 
 
@@ -22,16 +22,22 @@ class RainWindows(unittest.TestCase):
 
 
 class Triggers(unittest.TestCase):
-    def test_river_trigger_scales_from_normal_to_double(self):
-        self.assertEqual(river_trigger(0.5), 0.0)
-        self.assertEqual(river_trigger(1.0), 0.0)
-        self.assertAlmostEqual(river_trigger(1.5), 0.5)
-        self.assertEqual(river_trigger(3.0), 1.0)
+    def test_river_trigger_scales_from_2yr_to_10yr_flow(self):
+        q10 = 1.5  # 10-year flow is 1.5x the 2-year flow
+        self.assertEqual(river_trigger(0.8, q10), 0.0)
+        self.assertEqual(river_trigger(1.0, q10), 0.0)
+        self.assertAlmostEqual(river_trigger(1.25, q10), 0.5)
+        self.assertEqual(river_trigger(2.0, q10), 1.0)
 
-    def test_rain_trigger_clamped(self):
-        self.assertEqual(rain_trigger(0), 0.0)
-        self.assertAlmostEqual(rain_trigger(75), 0.5)
+    def test_rain_trigger_between_heavy_and_very_heavy_days(self):
+        self.assertEqual(rain_trigger(50), 0.0)
+        self.assertAlmostEqual(rain_trigger(176), 0.5)
         self.assertEqual(rain_trigger(400), 1.0)
+
+    def test_return_levels_from_annual_maxima(self):
+        q2, q10 = return_levels(list(range(1, 31)))
+        self.assertAlmostEqual(q2, 15.5)
+        self.assertAlmostEqual(q10, 27.1, places=1)
 
 
 class Lattice(unittest.TestCase):
