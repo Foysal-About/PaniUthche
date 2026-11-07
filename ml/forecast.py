@@ -1,9 +1,12 @@
-"""Scores each area's grid with forecast rain and writes map layers for the app.
+"""Scores each area's grid and writes map layers for the app.
 
   python forecast.py   # out/risk_<area>.geojson + out/summary.json
 
-Rain comes from NOAA GFS through the Open-Meteo forecast API (7 past days + 7 forecast days),
-fetched on a coarse lattice and assigned to the nearest lattice point for each cell.
+risk(cell, day) = susceptibility(cell) x trigger(cell, day)
+  susceptibility: the terrain model trained on Sentinel-1 flood maps (train.py)
+  trigger: the larger of
+    - river: GloFAS discharge vs its 90-day median at the area's main river (catches upstream rain)
+    - rain:  NOAA GFS 3-day rain at the cell (catches local downpours), via Open-Meteo on a coarse lattice
 """
 import json
 import math
@@ -21,6 +24,40 @@ PAST_DAYS = 7
 FORECAST_DAYS = 7
 MIN_PROB_TO_DRAW = 0.1   # keeps the GeoJSON small for the phone
 EXPOSED_PROB = 0.5       # a cell's people count as exposed at or above this
+# shortcut: hand-set trigger scales (river at 2x normal flow, or 150 mm in 3 days, = full trigger);
+# calibrate against FFWC danger levels and past events before relying on the numbers.
+RIVER_FULL_RATIO = 2.0
+RAIN_FULL_3D_MM = 150.0
+GLOFAS_PAST_DAYS = 90
+
+
+def river_trigger(ratio: float) -> float:
+    """0 at normal flow, 1 at RIVER_FULL_RATIO x normal."""
+    return min(max((ratio - 1) / (RIVER_FULL_RATIO - 1), 0.0), 1.0)
+
+
+def rain_trigger(rain_3d_mm: float) -> float:
+    return min(max(rain_3d_mm / RAIN_FULL_3D_MM, 0.0), 1.0)
+
+
+def fetch_river_ratios(bbox) -> list:
+    """Per forecast day, GloFAS discharge / 90-day median at the area's main river.
+
+    GloFAS cells are ~5 km and a point often lands on a small stream, so search a 5x5 lattice
+    across the area and use the cell with the largest typical flow.
+    """
+    w, s, e, n = bbox
+    pts = [(w + (e - w) * i / 4, s + (n - s) * j / 4) for i in range(5) for j in range(5)]
+    r = requests.get("https://flood-api.open-meteo.com/v1/flood", timeout=60, params={
+        "latitude": ",".join(f"{la:.3f}" for _, la in pts),
+        "longitude": ",".join(f"{lo:.3f}" for lo, _ in pts),
+        "daily": "river_discharge", "past_days": GLOFAS_PAST_DAYS, "forecast_days": FORECAST_DAYS,
+    })
+    r.raise_for_status()
+    series = [[x or 0.0 for x in loc["daily"]["river_discharge"]] for loc in r.json()]
+    main = max(series, key=lambda q: float(np.median(q[:GLOFAS_PAST_DAYS])))
+    normal = float(np.median(main[:GLOFAS_PAST_DAYS])) or 1.0
+    return [q / normal for q in main[GLOFAS_PAST_DAYS:GLOFAS_PAST_DAYS + FORECAST_DAYS]]
 
 
 def rain_windows(daily: list) -> list:
@@ -73,16 +110,15 @@ def fetch_rain(points: list) -> dict:
 
 
 def score_area(model, grid: pd.DataFrame, bbox) -> pd.DataFrame:
-    pts = lattice(bbox, C.RAIN_LATTICE_DEG)
-    windows = {pt: rain_windows(daily) for pt, daily in fetch_rain(pts).items()}
+    susceptibility = model.predict_proba(grid[C.FEATURES].astype(float))[:, 1]
+    river = [river_trigger(x) for x in fetch_river_ratios(bbox)]
+    windows = {pt: rain_windows(daily) for pt, daily in fetch_rain(lattice(bbox, C.RAIN_LATTICE_DEG)).items()}
     keys = [nearest_lattice(lo, la, bbox, C.RAIN_LATTICE_DEG) for lo, la in zip(grid["longitude"], grid["latitude"])]
-    probs = []
-    for day in range(FORECAST_DAYS):
-        X = grid[C.FEATURES[:6]].copy()
-        X[["rain_1d", "rain_3d", "rain_7d"]] = np.array([windows[k][day] for k in keys])
-        probs.append(model.predict_proba(X[C.FEATURES].astype(float))[:, 1])
-    probs = np.vstack(probs)
-    return grid.assign(prob=probs.max(axis=0), peak_day=probs.argmax(axis=0))
+    probs = np.vstack([
+        susceptibility * np.maximum(river[day], [rain_trigger(windows[k][day][1]) for k in keys])
+        for day in range(FORECAST_DAYS)
+    ])
+    return grid.assign(susceptibility=susceptibility, prob=probs.max(axis=0), peak_day=probs.argmax(axis=0))
 
 
 def to_geojson(scored: pd.DataFrame) -> dict:
@@ -90,8 +126,8 @@ def to_geojson(scored: pd.DataFrame) -> dict:
     feats = [{
         "type": "Feature",
         "geometry": {"type": "Polygon", "coordinates": cell_polygon(r.longitude, r.latitude, C.GRID_SCALE_M)},
-        "properties": {"prob": round(float(r.prob), 3), "peak_date": str(today + timedelta(days=int(r.peak_day))),
-                       "people": int(r.people)},
+        "properties": {"prob": round(float(r.prob), 3), "susceptibility": round(float(r.susceptibility), 3),
+                       "peak_date": str(today + timedelta(days=int(r.peak_day))), "people": int(r.people)},
     } for r in scored.itertuples() if r.prob >= MIN_PROB_TO_DRAW]
     return {"type": "FeatureCollection", "features": feats}
 
@@ -105,7 +141,7 @@ def main():
         if not os.path.exists(path):
             print(f"skip {name}: {path} missing (run `python build_dataset.py grid`)")
             continue
-        grid = pd.read_csv(path).dropna(subset=C.FEATURES[:6])
+        grid = pd.read_csv(path).dropna(subset=C.FEATURES)
         scored = score_area(model, grid, bbox)
         with open(os.path.join(C.OUT_DIR, f"risk_{name}.geojson"), "w") as f:
             json.dump(to_geojson(scored), f)

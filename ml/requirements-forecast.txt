@@ -1,0 +1,5 @@
+# Daily CI forecast only. scikit-learn must match the version that pickled model/flood_model.joblib.
+scikit-learn==1.9.1
+pandas==3.1.1
+numpy==2.5.4
+requests

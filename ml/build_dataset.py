@@ -28,15 +28,6 @@ def static_features() -> ee.Image:
     )
 
 
-def rain_features(end_date: str) -> ee.Image:
-    """Rain (mm) over 1/3/7 days ending the day before end_date, from ERA5-Land."""
-    end = ee.Date(end_date)
-    era5 = ee.ImageCollection("ECMWF/ERA5_LAND/DAILY_AGGR").select("total_precipitation_sum")
-    def total(days):
-        return era5.filterDate(end.advance(-days, "day"), end).sum().multiply(1000)
-    return ee.Image.cat(total(1).rename("rain_1d"), total(3).rename("rain_3d"), total(7).rename("rain_7d"))
-
-
 def flood_label(event: dict, aoi: ee.Geometry) -> ee.Image:
     s1 = (ee.ImageCollection("COPERNICUS/S1_GRD").filterBounds(aoi)
           .filter(ee.Filter.eq("instrumentMode", "IW"))
@@ -57,8 +48,7 @@ def to_frame(fc: ee.FeatureCollection) -> pd.DataFrame:
 def export_samples():
     for name, ev in C.EVENTS.items():
         aoi = ee.Geometry.Rectangle(ev["bbox"])
-        img = ee.Image.cat(static_features(), rain_features(ev["during"][0]),
-                           flood_label(ev, aoi), ee.Image.pixelLonLat())
+        img = ee.Image.cat(static_features(), flood_label(ev, aoi), ee.Image.pixelLonLat())
         fc = img.stratifiedSample(
             numPoints=C.SAMPLES_PER_CLASS, classBand="flood", region=aoi, scale=C.SAMPLE_SCALE_M,
             classValues=[0, 1], classPoints=[C.SAMPLES_PER_CLASS] * 2, seed=42, tileScale=4,
@@ -71,11 +61,12 @@ def export_samples():
 
 
 def export_grids():
-    pop = (ee.ImageCollection("WorldPop/GP/100m/pop").filter(ee.Filter.eq("country", "BGD"))
-           .filter(ee.Filter.eq("year", 2020)).first().select("population"))
-    # People per km², averaged per cell, then scaled to the cell area.
-    density = pop.divide(ee.Image.pixelArea()).multiply(1e6).rename("pop_density")
-    img = ee.Image.cat(static_features(), density, ee.Image.pixelLonLat())
+    pop = (ee.ImageCollection("WorldPop/GP/100m/R2025A/v1/pop").filter(ee.Filter.eq("country", "BGD"))
+           .filter(ee.Filter.eq("year", 2025)).first().select("population"))
+    # Sum the 100 m people counts into each grid cell.
+    people = (pop.reduceResolution(ee.Reducer.sum().unweighted(), maxPixels=1024)
+              .reproject(pop.projection().atScale(C.GRID_SCALE_M)).rename("people"))
+    img = ee.Image.cat(static_features(), people, ee.Image.pixelLonLat())
     for name, (w, s, e, n) in C.AREAS.items():
         # Split into ~0.3° tiles so each request stays under Earth Engine's size limits.
         frames, step = [], 0.3
@@ -88,7 +79,7 @@ def export_grids():
                 lat += step
             lon += step
         df = pd.concat(frames, ignore_index=True).drop(columns=["geo"], errors="ignore")
-        df["people"] = df.pop("pop_density").fillna(0) * (C.GRID_SCALE_M / 1000) ** 2
+        df["people"] = df["people"].fillna(0)
         path = os.path.join(C.DATA_DIR, f"grid_{name}.csv")
         df.to_csv(path, index=False)
         print(f"{name}: {len(df)} cells, {df['people'].sum():,.0f} people -> {path}")

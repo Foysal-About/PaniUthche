@@ -5,7 +5,6 @@ GEE_PROJECT = "idyllic-creek-446208-a1"
 
 # Past floods with Sentinel-1 coverage, used as training labels.
 # before: dry-season reference window. during: imagery window at/after the flood peak.
-# Rain features are summed over the days just before `during[0]`.
 EVENTS = {
     "sylhet_2022": {
         "bbox": [91.0, 24.5, 92.2, 25.3],
@@ -37,7 +36,13 @@ SAMPLES_PER_CLASS = 3000  # per event, flooded and dry each
 GRID_SCALE_M = 1000       # forecast cell size
 RAIN_LATTICE_DEG = 0.1    # forecast rain fetched on this lattice, then assigned to cells
 
-FEATURES = ["elv", "hnd", "upa_log", "slope", "landcover", "dist_water", "rain_1d", "rain_3d", "rain_7d"]
+# Terrain-only susceptibility. Local rain was dropped: in Sylhet 2022 flooded cells got *less*
+# local rain (the water came from Meghalaya upstream), and held-out AUC was equal or better without it.
+# Rain enters at forecast time as a trigger instead (see forecast.py).
+# Absolute elevation was also dropped: both training floods sit at ~5-10 m, so the model learned
+# "below ~15 m floods" and scored Kurigram (~25-30 m, Brahmaputra floodplain) as safe. Relative height
+# above the river (hnd) carries over; held-out AUC fell 0.92 -> ~0.89 but unseen districts score sensibly.
+FEATURES = ["hnd", "upa_log", "slope", "landcover", "dist_water"]
 CATEGORICAL = ["landcover"]
 
 DATA_DIR = "data"

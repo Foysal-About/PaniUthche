@@ -5,7 +5,7 @@ import numpy as np
 import pandas as pd
 
 import config as C
-from forecast import cell_polygon, lattice, nearest_lattice, rain_windows
+from forecast import cell_polygon, lattice, nearest_lattice, rain_trigger, rain_windows, river_trigger
 from train import evaluate, fit, split_by_event
 
 
@@ -19,6 +19,19 @@ class RainWindows(unittest.TestCase):
 
     def test_missing_values_count_as_zero(self):
         self.assertEqual(rain_windows([None] * 14)[0], (0.0, 0.0, 0.0))
+
+
+class Triggers(unittest.TestCase):
+    def test_river_trigger_scales_from_normal_to_double(self):
+        self.assertEqual(river_trigger(0.5), 0.0)
+        self.assertEqual(river_trigger(1.0), 0.0)
+        self.assertAlmostEqual(river_trigger(1.5), 0.5)
+        self.assertEqual(river_trigger(3.0), 1.0)
+
+    def test_rain_trigger_clamped(self):
+        self.assertEqual(rain_trigger(0), 0.0)
+        self.assertAlmostEqual(rain_trigger(75), 0.5)
+        self.assertEqual(rain_trigger(400), 1.0)
 
 
 class Lattice(unittest.TestCase):
@@ -39,14 +52,13 @@ class TrainByEvent(unittest.TestCase):
     def synthetic(self, event, n=400, seed=0):
         rng = np.random.default_rng(seed)
         hnd = rng.uniform(0, 30, n)
-        rain = rng.uniform(0, 300, n)
         df = pd.DataFrame({
             "elv": hnd + rng.normal(0, 2, n), "hnd": hnd, "upa_log": rng.uniform(0, 4, n),
             "slope": rng.uniform(0, 5, n), "landcover": rng.choice([10, 40, 50, 80], n),
-            "dist_water": rng.uniform(0, 20000, n), "rain_1d": rain / 5, "rain_3d": rain / 2, "rain_7d": rain,
+            "dist_water": rng.uniform(0, 20000, n),
         })
-        # Low-lying cells after heavy rain flood.
-        df["flood"] = ((hnd < 8) & (rain > 120)).astype(int)
+        # Cells close to river level flood.
+        df["flood"] = (hnd < 8).astype(int)
         df["event"] = event
         return df
 
