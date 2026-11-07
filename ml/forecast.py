@@ -17,8 +17,15 @@ import joblib
 import numpy as np
 import pandas as pd
 import requests
+from requests.adapters import HTTPAdapter
+from urllib3.util.retry import Retry
 
 import config as C
+
+# Open-Meteo occasionally times out; retry with backoff (5, 10, 20, 40 s) before failing the run.
+http = requests.Session()
+http.mount("https://", HTTPAdapter(max_retries=Retry(
+    total=4, backoff_factor=5, status_forcelist=[429, 500, 502, 503, 504], allowed_methods=["GET"])))
 
 PAST_DAYS = 7
 FORECAST_DAYS = 7
@@ -48,7 +55,7 @@ def fetch_river_ratios(bbox) -> list:
     """
     w, s, e, n = bbox
     pts = [(w + (e - w) * i / 4, s + (n - s) * j / 4) for i in range(5) for j in range(5)]
-    r = requests.get("https://flood-api.open-meteo.com/v1/flood", timeout=60, params={
+    r = http.get("https://flood-api.open-meteo.com/v1/flood", timeout=60, params={
         "latitude": ",".join(f"{la:.3f}" for _, la in pts),
         "longitude": ",".join(f"{lo:.3f}" for lo, _ in pts),
         "daily": "river_discharge", "past_days": GLOFAS_PAST_DAYS, "forecast_days": FORECAST_DAYS,
@@ -96,7 +103,7 @@ def fetch_rain(points: list) -> dict:
     out = {}
     for i in range(0, len(points), 100):
         chunk = points[i:i + 100]
-        r = requests.get("https://api.open-meteo.com/v1/forecast", timeout=60, params={
+        r = http.get("https://api.open-meteo.com/v1/forecast", timeout=60, params={
             "latitude": ",".join(str(la) for _, la in chunk),
             "longitude": ",".join(str(lo) for lo, _ in chunk),
             "daily": "precipitation_sum", "models": "gfs_seamless",
