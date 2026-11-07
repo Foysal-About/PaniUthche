@@ -4,6 +4,18 @@
 
     <!-- Navigation -->
     <string name="nav_forecast">পূর্বাভাস</string>
+    <string name="nav_map">বন্যা মানচিত্র</string>
+
+    <!-- AI flood model -->
+    <string name="ai_title">এআই বন্যা ঝুঁকি</string>
+    <string name="ai_max_risk">সর্বোচ্চ ঝুঁকি</string>
+    <string name="ai_area_at_risk">ঝুঁকিপূর্ণ এলাকা</string>
+    <string name="ai_people_exposed">ঝুঁকিতে মানুষ</string>
+    <string name="ai_updated">হালনাগাদ %1$s</string>
+    <string name="ai_offline">অফলাইন কপি</string>
+    <string name="ai_view_map">মানচিত্র দেখুন</string>
+    <string name="ai_error">এআই পূর্বাভাস পাওয়া যায়নি। ইন্টারনেট সংযোগ দেখুন।</string>
+    <string name="map_note">মডেলটি Sentinel-1 স্যাটেলাইটের বন্যা মানচিত্রে প্রশিক্ষিত, GloFAS নদী ও NOAA GFS বৃষ্টির পূর্বাভাস ব্যবহার করে। ১ কিমি ঘর, আগামী ৭ দিন।</string>
     <string name="nav_sos">জরুরি SOS</string>
 
     <!-- Forecast -->
@@ -62,4 +74,25 @@
     <string name="people_stuck">%1$s জন আটকে আছে</string>
     <string name="sent_from_here">এই ফোন থেকে পাঠানো</string>
     <string name="hops_away">%1$s ধাপ দূর থেকে এসেছে</string>
+
+    <!-- Alerts and location -->
+    <string name="alerts_title">বন্যা সতর্কতা</string>
+    <string name="alerts_subtitle">প্রতি ৬ ঘণ্টায় পরীক্ষা করে, আপনার এলাকায় ঝুঁকি বাড়লে জানাবে</string>
+    <string name="alerts_check_now">এখনই দেখুন</string>
+    <string name="alerts_denied">নোটিফিকেশন বন্ধ আছে। বন্যা সতর্কতা পেতে সেটিংসে অনুমতি দিন।</string>
+    <string name="loc_use_mine">আমার অবস্থান ব্যবহার করুন</string>
+    <string name="loc_finding">অবস্থান খোঁজা হচ্ছে…</string>
+    <string name="loc_none">অবস্থান দেওয়া হয়নি। সতর্কতা পুরো জেলার জন্য দেখানো হবে।</string>
+    <string name="loc_set">আপনার অবস্থান সংরক্ষিত আছে।</string>
+    <string name="loc_other_district">আপনার অবস্থান অন্য জেলায়।</string>
+    <string name="loc_risk">আপনার অবস্থানে ঝুঁকি: %1$s</string>
+    <string name="loc_risk_low">আপনার অবস্থানে ঝুঁকি: ১০%-এর কম</string>
+    <string name="map_you">আপনি এখানে</string>
+    <string name="alert_channel">বন্যা সতর্কতা</string>
+    <string name="alert_high_title">বন্যার উচ্চ ঝুঁকি: %1$s</string>
+    <string name="alert_medium_title">বন্যার ঝুঁকি বাড়ছে: %1$s</string>
+    <string name="alert_none_title">এখন বন্যার ঝুঁকি নেই: %1$s</string>
+    <string name="alert_at_location">আপনার অবস্থানে ঝুঁকি: %1$s%%।</string>
+    <string name="alert_in_district">আপনার জেলায় সর্বোচ্চ ঝুঁকি: %1$s%%।</string>
+    <string name="alert_peak">সম্ভাব্য সর্বোচ্চ দিন %1$s।</string>
 </resources>

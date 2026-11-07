@@ -5,15 +5,16 @@ import org.json.JSONArray
 import org.json.JSONObject
 import java.net.URL
 
-data class District(@StringRes val name: Int, val lat: Double, val lon: Double)
+/** [key] matches the area names in ml/config.py and the published risk_<key>.geojson. */
+data class District(val key: String, @StringRes val name: Int, val lat: Double, val lon: Double)
 
 // Pilot districts on major flood-prone rivers.
 val districts = listOf(
-    District(R.string.district_sylhet, 24.90, 91.87),
-    District(R.string.district_sunamganj, 25.07, 91.40),
-    District(R.string.district_kurigram, 25.81, 89.64),
-    District(R.string.district_feni, 23.01, 91.40),
-    District(R.string.district_sirajganj, 24.45, 89.70),
+    District("sylhet", R.string.district_sylhet, 24.90, 91.87),
+    District("sunamganj", R.string.district_sunamganj, 25.07, 91.40),
+    District("kurigram", R.string.district_kurigram, 25.81, 89.64),
+    District("feni", R.string.district_feni, 23.01, 91.40),
+    District("sirajganj", R.string.district_sirajganj, 24.45, 89.70),
 )
 
 enum class Risk { LOW, MEDIUM, HIGH }

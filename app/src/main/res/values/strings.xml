@@ -4,6 +4,18 @@
 
     <!-- Navigation -->
     <string name="nav_forecast">Forecast</string>
+    <string name="nav_map">Flood map</string>
+
+    <!-- AI flood model -->
+    <string name="ai_title">AI flood risk</string>
+    <string name="ai_max_risk">Highest risk</string>
+    <string name="ai_area_at_risk">Area at risk</string>
+    <string name="ai_people_exposed">People exposed</string>
+    <string name="ai_updated">Updated %1$s</string>
+    <string name="ai_offline">Offline copy</string>
+    <string name="ai_view_map">View map</string>
+    <string name="ai_error">AI forecast unavailable. Check your connection.</string>
+    <string name="map_note">Model trained on Sentinel-1 satellite flood maps, driven by GloFAS river and NOAA GFS rain forecasts. 1 km cells, next 7 days.</string>
     <string name="nav_sos">Emergency SOS</string>
 
     <!-- Forecast -->
@@ -62,4 +74,25 @@
     <string name="people_stuck">%1$s people stuck</string>
     <string name="sent_from_here">Sent from this phone</string>
     <string name="hops_away">Came %1$s hops away</string>
+
+    <!-- Alerts and location -->
+    <string name="alerts_title">Flood alerts</string>
+    <string name="alerts_subtitle">Checks every 6 hours and notifies you if risk rises at your location</string>
+    <string name="alerts_check_now">Check now</string>
+    <string name="alerts_denied">Notifications are blocked. Allow them in Settings to get flood alerts.</string>
+    <string name="loc_use_mine">Use my location</string>
+    <string name="loc_finding">Finding location…</string>
+    <string name="loc_none">Location not set. Alerts will use the whole district.</string>
+    <string name="loc_set">Your location is saved.</string>
+    <string name="loc_other_district">Your location is in another district.</string>
+    <string name="loc_risk">Risk at your location: %1$s</string>
+    <string name="loc_risk_low">Risk at your location: below 10%</string>
+    <string name="map_you">You are here</string>
+    <string name="alert_channel">Flood alerts</string>
+    <string name="alert_high_title">High flood risk: %1$s</string>
+    <string name="alert_medium_title">Flood risk rising: %1$s</string>
+    <string name="alert_none_title">No flood risk now: %1$s</string>
+    <string name="alert_at_location">Risk at your location: %1$s%%.</string>
+    <string name="alert_in_district">Highest risk in your district: %1$s%%.</string>
+    <string name="alert_peak">Peak expected %1$s.</string>
 </resources>

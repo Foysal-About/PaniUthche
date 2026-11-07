@@ -34,6 +34,8 @@ dependencies {
     implementation(libs.androidx.compose.ui.tooling.preview)
     implementation(libs.androidx.core.ktx)
     implementation(libs.play.services.nearby)
+    implementation(libs.osmdroid)
+    implementation(libs.androidx.work.runtime.ktx)
     testImplementation(libs.junit)
     debugImplementation(libs.androidx.compose.ui.tooling)
 }

@@ -5,6 +5,7 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.darkColorScheme
 import androidx.compose.material3.lightColorScheme
 import android.content.res.Configuration
+import androidx.activity.compose.LocalActivityResultRegistryOwner
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.remember
@@ -64,11 +65,15 @@ val LocalLang = staticCompositionLocalOf { Lang.BN }
 @Composable
 fun LocalizedContent(lang: Lang, content: @Composable () -> Unit) {
     val base = LocalContext.current
+    // The swapped-in context is not an Activity, so permission launchers can't find the registry
+    // through it; capture the Activity's registry first and pass it down explicitly.
+    val registryOwner = checkNotNull(LocalActivityResultRegistryOwner.current)
     val ctx = remember(lang) {
         val config = Configuration(base.resources.configuration).apply { setLocale(Locale.forLanguageTag(lang.tag)) }
         base.createConfigurationContext(config)
     }
     CompositionLocalProvider(
+        LocalActivityResultRegistryOwner provides registryOwner,
         LocalContext provides ctx,
         LocalConfiguration provides ctx.resources.configuration,
         LocalLang provides lang,

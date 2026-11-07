@@ -18,6 +18,7 @@ import androidx.compose.material.icons.filled.CheckCircle
 import androidx.compose.material.icons.filled.Home
 import androidx.compose.material.icons.filled.Info
 import androidx.compose.material.icons.filled.LocationOn
+import androidx.compose.material.icons.filled.Place
 import androidx.compose.material.icons.filled.Refresh
 import androidx.compose.material.icons.filled.Warning
 import androidx.compose.material3.*
@@ -39,7 +40,8 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import java.util.Locale
 import androidx.compose.ui.unit.dp
-import androidx.lifecycle.ViewModel
+import android.app.Application
+import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
 import androidx.lifecycle.viewmodel.compose.viewModel
 import kotlinx.coroutines.Dispatchers
@@ -52,20 +54,58 @@ sealed interface UiState {
     data class Error(val message: String?) : UiState
 }
 
-class ForecastViewModel : ViewModel() {
-    var district by mutableStateOf(districts[0]); private set
+sealed interface MlState {
+    data object Loading : MlState
+    data class Ready(val forecast: MlForecast) : MlState
+    data object Error : MlState
+}
+
+// Shared by the Forecast and Map tabs (both scoped to the activity), so the district choice carries over.
+class ForecastViewModel(app: Application) : AndroidViewModel(app) {
+    var location by mutableStateOf(savedLocation(app)); private set
+    var district by mutableStateOf(location?.let { nearestDistrict(it.first, it.second) } ?: districts[0]); private set
     var state by mutableStateOf<UiState>(UiState.Loading); private set
+    var ml by mutableStateOf<MlState>(MlState.Loading); private set
+    var alertsOn by mutableStateOf(settings(app).getBoolean("alerts_on", false)); private set
+    var locating by mutableStateOf(false); private set
 
     init { load(district) }
 
+    /** Gets a GPS fix, saves it for the alert worker, and switches to the nearest district. */
+    fun locate() {
+        locating = true
+        viewModelScope.launch {
+            currentLocation(getApplication())?.let {
+                saveLocation(getApplication(), it.latitude, it.longitude)
+                location = it.latitude to it.longitude
+                load(nearestDistrict(it.latitude, it.longitude))
+            }
+            locating = false
+        }
+    }
+
+    fun setAlerts(on: Boolean) {
+        if (on) scheduleAlerts(getApplication()) else cancelAlerts(getApplication())
+        alertsOn = on
+    }
+
     fun load(d: District) {
         district = d
+        settings(getApplication()).edit().putString("district", d.key).apply()
         state = UiState.Loading
+        ml = MlState.Loading
         viewModelScope.launch {
             state = try {
                 UiState.Ready(withContext(Dispatchers.IO) { fetchForecast(d) })
             } catch (e: Exception) {
                 UiState.Error(e.message)
+            }
+        }
+        viewModelScope.launch {
+            ml = try {
+                MlState.Ready(withContext(Dispatchers.IO) { fetchMlForecast(getApplication(), d) })
+            } catch (e: Exception) {
+                MlState.Error
             }
         }
     }
@@ -111,6 +151,11 @@ fun App(onToggleLang: () -> Unit) {
                 )
                 NavigationBarItem(
                     tab == 1, { tab = 1 },
+                    icon = { Icon(Icons.Filled.Place, null) }, label = { Text(stringResource(R.string.nav_map)) },
+                    colors = NavigationBarItemDefaults.colors(selectedIconColor = primary, selectedTextColor = primary),
+                )
+                NavigationBarItem(
+                    tab == 2, { tab = 2 },
                     icon = { Icon(Icons.Filled.Warning, null) }, label = { Text(stringResource(R.string.nav_sos)) },
                     colors = NavigationBarItemDefaults.colors(selectedIconColor = red, selectedTextColor = red,
                         indicatorColor = red.copy(alpha = 0.15f)),
@@ -118,7 +163,13 @@ fun App(onToggleLang: () -> Unit) {
             }
         },
     ) { padding ->
-        Box(Modifier.padding(padding)) { if (tab == 0) HomeScreen(onToggleLang) else SosScreen(onToggleLang) }
+        Box(Modifier.padding(padding)) {
+            when (tab) {
+                0 -> HomeScreen(onToggleLang, onOpenMap = { tab = 1 })
+                1 -> MapScreen(onToggleLang)
+                else -> SosScreen(onToggleLang)
+            }
+        }
     }
 }
 
@@ -131,7 +182,7 @@ private fun Risk.style() = when (this) {
 }
 
 @Composable
-fun HomeScreen(onToggleLang: () -> Unit, vm: ForecastViewModel = viewModel()) {
+fun HomeScreen(onToggleLang: () -> Unit, onOpenMap: () -> Unit, vm: ForecastViewModel = viewModel()) {
     Column(
         Modifier.fillMaxSize().verticalScroll(rememberScrollState()).padding(horizontal = 16.dp, vertical = 12.dp),
         verticalArrangement = Arrangement.spacedBy(16.dp),
@@ -147,14 +198,11 @@ fun HomeScreen(onToggleLang: () -> Unit, vm: ForecastViewModel = viewModel()) {
             IconButton(onClick = { vm.load(vm.district) }) { Icon(Icons.Filled.Refresh, stringResource(R.string.refresh)) }
         }
 
-        Row(Modifier.horizontalScroll(rememberScrollState()), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-            districts.forEach { d ->
-                FilterChip(
-                    selected = d == vm.district, onClick = { vm.load(d) }, label = { Text(stringResource(d.name)) },
-                    leadingIcon = if (d == vm.district) { { Icon(Icons.Filled.LocationOn, null, Modifier.size(18.dp)) } } else null,
-                )
-            }
-        }
+        DistrictChips(vm)
+
+        AlertsCard(vm)
+
+        MlSummaryCard(vm.ml, onOpenMap)
 
         AnimatedContent(vm.state, label = "forecast") { s ->
             when (s) {
@@ -176,6 +224,60 @@ fun HomeScreen(onToggleLang: () -> Unit, vm: ForecastViewModel = viewModel()) {
             Icon(Icons.Filled.Info, null, tint = MaterialTheme.colorScheme.onSurfaceVariant, modifier = Modifier.size(18.dp))
             Text(stringResource(R.string.disclaimer), style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
         }
+    }
+}
+
+@Composable
+fun DistrictChips(vm: ForecastViewModel) =
+    Row(Modifier.horizontalScroll(rememberScrollState()), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+        districts.forEach { d ->
+            FilterChip(
+                selected = d == vm.district, onClick = { vm.load(d) }, label = { Text(stringResource(d.name)) },
+                leadingIcon = if (d == vm.district) { { Icon(Icons.Filled.LocationOn, null, Modifier.size(18.dp)) } } else null,
+            )
+        }
+    }
+
+@Composable
+private fun MlSummaryCard(ml: MlState, onOpenMap: () -> Unit) {
+    Card(colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.primaryContainer)) {
+        Column(Modifier.fillMaxWidth().padding(16.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
+            Row(verticalAlignment = Alignment.CenterVertically) {
+                Text(stringResource(R.string.ai_title), Modifier.weight(1f), style = MaterialTheme.typography.titleMedium,
+                    fontWeight = FontWeight.SemiBold, color = MaterialTheme.colorScheme.onPrimaryContainer)
+                if (ml is MlState.Ready) MlUpdatedLabel(ml.forecast)
+            }
+            when (ml) {
+                MlState.Loading -> LinearProgressIndicator(Modifier.fillMaxWidth())
+                MlState.Error -> Text(stringResource(R.string.ai_error), style = MaterialTheme.typography.bodyMedium)
+                is MlState.Ready -> {
+                    MlStats(ml.forecast.summary)
+                    FilledTonalButton(onClick = onOpenMap) {
+                        Icon(Icons.Filled.Place, null, Modifier.size(18.dp))
+                        Spacer(Modifier.width(8.dp))
+                        Text(stringResource(R.string.ai_view_map))
+                    }
+                }
+            }
+        }
+    }
+}
+
+@Composable
+fun MlUpdatedLabel(f: MlForecast) = Text(
+    if (f.offline) stringResource(R.string.ai_offline) else stringResource(R.string.ai_updated, locDate(f.generated)),
+    style = MaterialTheme.typography.labelSmall,
+    color = if (f.offline) MaterialTheme.colorScheme.error else MaterialTheme.colorScheme.onSurfaceVariant,
+)
+
+@Composable
+fun MlStats(s: AreaSummary?) {
+    Row(Modifier.height(IntrinsicSize.Min), horizontalArrangement = Arrangement.spacedBy(12.dp)) {
+        Stat(stringResource(R.string.ai_max_risk), "${((s?.maxProb ?: 0.0) * 100).toInt()}%".loc(), "",
+            Modifier.weight(1f).fillMaxHeight())
+        Stat(stringResource(R.string.ai_area_at_risk), "${s?.cellsAtRisk ?: 0}".loc(), "km²", Modifier.weight(1f).fillMaxHeight())
+        Stat(stringResource(R.string.ai_people_exposed), "%,d".format(Locale.US, s?.peopleExposed ?: 0).loc(), "",
+            Modifier.weight(1f).fillMaxHeight())
     }
 }
 
@@ -215,11 +317,11 @@ private fun StatsRow(f: Forecast) {
 }
 
 @Composable
-private fun Stat(label: String, value: String, unit: String, modifier: Modifier) {
+fun Stat(label: String, value: String, unit: String, modifier: Modifier) {
     Card(modifier, colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceContainer)) {
         Column(Modifier.padding(12.dp)) {
             Text(label, style = MaterialTheme.typography.labelMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
-            Text(value, style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.SemiBold, maxLines = 1)
+            Text(value, style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.SemiBold, maxLines = 2)
             if (unit.isNotEmpty()) Text(unit, style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
         }
     }
