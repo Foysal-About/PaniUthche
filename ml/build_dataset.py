@@ -64,12 +64,26 @@ def export_grids():
     pop = (ee.ImageCollection("WorldPop/GP/100m/R2025A/v1/pop").filter(ee.Filter.eq("country", "BGD"))
            .filter(ee.Filter.eq("year", 2025)).first().select("population"))
     # Sum the 100 m people counts into each grid cell.
-    people = (pop.reduceResolution(ee.Reducer.sum().unweighted(), maxPixels=1024)
-              .reproject(pop.projection().atScale(C.GRID_SCALE_M)).rename("people"))
-    img = ee.Image.cat(static_features(), people, ee.Image.pixelLonLat())
+    grid = pop.projection().atScale(C.GRID_SCALE_M)
+    people = pop.reduceResolution(ee.Reducer.sum().unweighted(), maxPixels=1024).reproject(grid).rename("people")
+    # Cropland: share of 10 m WorldCover pixels classed cropland (40), times cell area in hectares.
+    cropland = (ee.ImageCollection("ESA/WorldCover/v200").first().eq(40)
+                .reduceResolution(ee.Reducer.mean(), maxPixels=65536).reproject(grid)
+                .multiply((C.GRID_SCALE_M / 100) ** 2).rename("cropland_ha"))
+    # Buildings: Open Buildings 2.5D (2023); fractional counts sum to an estimated building count.
+    # Native pixels are 0.5 m, too fine to sum directly. Sample at 4 m (1 in 64 native pixels, ~62k samples
+    # per 1 km cell), sum in two steps (4 m -> 100 m -> cell), and scale by 64 for an unbiased count estimate.
+    total = ee.Reducer.sum().unweighted()
+    buildings = (ee.ImageCollection("GOOGLE/Research/open-buildings-temporal/v1")
+                 .filterDate("2023-01-01", "2024-01-01").mosaic().select("building_fractional_count")
+                 .setDefaultProjection(pop.projection().atScale(4))
+                 .reduceResolution(total, maxPixels=1024).reproject(pop.projection().atScale(100))
+                 .reduceResolution(total, maxPixels=1024).reproject(grid)
+                 .multiply((4 / 0.5) ** 2).rename("buildings"))
+    img = ee.Image.cat(static_features(), people, cropland.unmask(0), buildings.unmask(0), ee.Image.pixelLonLat())
     for name, (w, s, e, n) in C.AREAS.items():
-        # Split into ~0.3° tiles so each request stays under Earth Engine's size limits.
-        frames, step = [], 0.3
+        # 0.1° tiles: the 4 m building layer is rendered per tile, and 0.3° exceeded the reprojection limit.
+        frames, step = [], 0.1
         lon = w
         while lon < e:
             lat = s

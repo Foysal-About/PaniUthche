@@ -9,7 +9,13 @@ import java.net.URL
 // Published twice daily by .github/workflows/forecast.yml (ml/forecast.py).
 private const val ML_BASE_URL = "https://foysal-about.github.io/PaniUthche/"
 
-data class AreaSummary(val maxProb: Double, val cellsAtRisk: Int, val peopleExposed: Int)
+data class AreaSummary(
+    val maxProb: Double,
+    val cellsAtRisk: Int,
+    val peopleExposed: Int,
+    val croplandHaExposed: Int = 0,
+    val buildingsExposed: Int = 0,
+)
 
 data class RiskCell(val ring: List<Pair<Double, Double>>, val prob: Double, val people: Int, val peakDate: String = "")
 
@@ -37,7 +43,11 @@ fun fetchMlForecast(context: Context, d: District): MlForecast {
     val (cellsText, cellsOffline) = fetchCached(context, "risk_${d.key}.geojson")
     val summary = JSONObject(summaryText)
     val area = summary.getJSONObject("areas").optJSONObject(d.key)?.let {
-        AreaSummary(it.getDouble("max_prob"), it.getInt("cells_at_risk"), it.getInt("people_exposed"))
+        AreaSummary(
+            it.getDouble("max_prob"), it.getInt("cells_at_risk"), it.getInt("people_exposed"),
+            // opt*: older cached summaries don't have the asset fields yet.
+            it.optInt("cropland_ha_exposed"), it.optInt("buildings_exposed"),
+        )
     }
     val features = JSONObject(cellsText).getJSONArray("features")
     val cells = List(features.length()) { i ->

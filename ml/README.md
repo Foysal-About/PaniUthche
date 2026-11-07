@@ -15,7 +15,7 @@ Local rain and absolute elevation were removed as features after testing; see co
 |---|---|---|
 | Labels + features | `build_dataset.py samples` | Sentinel-1, MERIT Hydro (HAND, drainage area), ESA WorldCover, JRC surface water |
 | Train + held-out test | `train.py` | train on one flood, test on another (no spatial leakage) |
-| Forecast grids | `build_dataset.py grid` | static features + WorldPop population per cell |
+| Forecast grids | `build_dataset.py grid` | static features + exposure per cell: WorldPop 2025 people, ESA WorldCover cropland (ha), Google Open Buildings 2023 building count |
 | Daily forecast | `forecast.py` | GloFAS river flow + NOAA GFS rain via Open-Meteo -> `out/risk_<area>.geojson`, `out/summary.json` |
 
 ## Run
@@ -37,4 +37,6 @@ python3 -m venv .venv && .venv/bin/pip install -r requirements.txt
 - Two training events is a small sample; report the held-out metrics as a prototype result.
 - Trigger scales (2x normal flow, 150 mm in 3 days) are hand-set, not calibrated.
 - Training samples are 50/50 flooded/dry, so precision is optimistic versus real-world prevalence.
+- Building counts are estimated from a 1-in-64 sample of Open Buildings' 0.5 m pixels; Kurigram and Sirajganj show ~2-3 people per building (many small rural structures), versus ~3.9 elsewhere.
+- Livestock is not included: no gridded livestock dataset (e.g. FAO GLW) is hosted in Earth Engine.
 - Not an official warning; FFWC and BMD remain the authority.

@@ -127,7 +127,8 @@ def to_geojson(scored: pd.DataFrame) -> dict:
         "type": "Feature",
         "geometry": {"type": "Polygon", "coordinates": cell_polygon(r.longitude, r.latitude, C.GRID_SCALE_M)},
         "properties": {"prob": round(float(r.prob), 3), "susceptibility": round(float(r.susceptibility), 3),
-                       "peak_date": str(today + timedelta(days=int(r.peak_day))), "people": int(r.people)},
+                       "peak_date": str(today + timedelta(days=int(r.peak_day))), "people": int(r.people),
+                       "cropland_ha": round(float(r.cropland_ha), 1), "buildings": int(r.buildings)},
     } for r in scored.itertuples() if r.prob >= MIN_PROB_TO_DRAW]
     return {"type": "FeatureCollection", "features": feats}
 
@@ -150,6 +151,8 @@ def main():
             "max_prob": round(float(scored["prob"].max()), 3),
             "cells_at_risk": int(len(exposed)),
             "people_exposed": int(exposed["people"].sum()),
+            "cropland_ha_exposed": int(exposed["cropland_ha"].sum()),
+            "buildings_exposed": int(exposed["buildings"].sum()),
         }
         print(name, summary["areas"][name])
     with open(os.path.join(C.OUT_DIR, "summary.json"), "w") as f:

@@ -271,12 +271,20 @@ fun MlUpdatedLabel(f: MlForecast, onDark: Boolean = false) = Text(
 
 @Composable
 fun MlStats(s: AreaSummary?) {
-    Row(Modifier.height(IntrinsicSize.Min), horizontalArrangement = Arrangement.spacedBy(12.dp)) {
-        Stat(stringResource(R.string.ai_max_risk), "${((s?.maxProb ?: 0.0) * 100).toInt()}%".loc(), "",
-            Modifier.weight(1f).fillMaxHeight())
-        Stat(stringResource(R.string.ai_area_at_risk), "${s?.cellsAtRisk ?: 0}".loc(), "km²", Modifier.weight(1f).fillMaxHeight())
-        Stat(stringResource(R.string.ai_people_exposed), "%,d".format(Locale.US, s?.peopleExposed ?: 0).loc(), "",
-            Modifier.weight(1f).fillMaxHeight())
+    @Composable fun count(n: Int?) = "%,d".format(Locale.US, n ?: 0).loc()
+    Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
+        Row(Modifier.height(IntrinsicSize.Min), horizontalArrangement = Arrangement.spacedBy(12.dp)) {
+            Stat(stringResource(R.string.ai_max_risk), "${((s?.maxProb ?: 0.0) * 100).toInt()}%".loc(), "",
+                Modifier.weight(1f).fillMaxHeight())
+            Stat(stringResource(R.string.ai_area_at_risk), count(s?.cellsAtRisk), "km²", Modifier.weight(1f).fillMaxHeight())
+            Stat(stringResource(R.string.ai_people_exposed), count(s?.peopleExposed), "", Modifier.weight(1f).fillMaxHeight())
+        }
+        // Assets in cells at or above 50% risk.
+        Row(Modifier.height(IntrinsicSize.Min), horizontalArrangement = Arrangement.spacedBy(12.dp)) {
+            Stat(stringResource(R.string.ai_cropland_exposed), count(s?.croplandHaExposed), stringResource(R.string.unit_hectares),
+                Modifier.weight(1f).fillMaxHeight())
+            Stat(stringResource(R.string.ai_buildings_exposed), count(s?.buildingsExposed), "", Modifier.weight(1f).fillMaxHeight())
+        }
     }
 }
 
