@@ -100,7 +100,12 @@ private fun RiskMap(district: District, cells: List<RiskCell>, me: Pair<Double, 
                 setAnchor(Marker.ANCHOR_CENTER, Marker.ANCHOR_BOTTOM)
                 title = youAreHere
             })
-            map.controller.setCenter(if (inDistrict) GeoPoint(me!!.first, me.second) else GeoPoint(district.lat, district.lon))
+            // Re-frame only when the district changes, so a refresh doesn't undo the user's pinch-zoom.
+            if (map.tag != district.key) {
+                map.tag = district.key
+                map.controller.setZoom(10.0)
+                map.controller.setCenter(if (inDistrict) GeoPoint(me!!.first, me.second) else GeoPoint(district.lat, district.lon))
+            }
             map.invalidate()
         },
         onRelease = { it.onDetach() },

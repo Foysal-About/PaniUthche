@@ -16,6 +16,10 @@
     <string name="ai_view_map">View map</string>
     <string name="ai_error">AI forecast unavailable. Check your connection.</string>
     <string name="map_note">Model trained on Sentinel-1 satellite flood maps, driven by GloFAS river and NOAA GFS rain forecasts. 1 km cells, next 7 days.</string>
+    <string name="src_ai_location">AI model · at your location</string>
+    <string name="src_ai_district">AI model · highest in district</string>
+    <string name="src_river">River flow only (AI forecast unavailable)</string>
+    <string name="river_title">River flow</string>
     <string name="nav_sos">Emergency SOS</string>
 
     <!-- Forecast -->
@@ -94,5 +98,6 @@
     <string name="alert_none_title">No flood risk now: %1$s</string>
     <string name="alert_at_location">Risk at your location: %1$s%%.</string>
     <string name="alert_in_district">Highest risk in your district: %1$s%%.</string>
+    <string name="alert_at_location_low">Risk at your location: below 10%.</string>
     <string name="alert_peak">Peak expected %1$s.</string>
 </resources>

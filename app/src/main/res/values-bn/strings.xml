@@ -16,6 +16,10 @@
     <string name="ai_view_map">মানচিত্র দেখুন</string>
     <string name="ai_error">এআই পূর্বাভাস পাওয়া যায়নি। ইন্টারনেট সংযোগ দেখুন।</string>
     <string name="map_note">মডেলটি Sentinel-1 স্যাটেলাইটের বন্যা মানচিত্রে প্রশিক্ষিত, GloFAS নদী ও NOAA GFS বৃষ্টির পূর্বাভাস ব্যবহার করে। ১ কিমি ঘর, আগামী ৭ দিন।</string>
+    <string name="src_ai_location">এআই মডেল · আপনার অবস্থানে</string>
+    <string name="src_ai_district">এআই মডেল · জেলায় সর্বোচ্চ</string>
+    <string name="src_river">শুধু নদীপ্রবাহ (এআই পূর্বাভাস পাওয়া যায়নি)</string>
+    <string name="river_title">নদীপ্রবাহ</string>
     <string name="nav_sos">জরুরি SOS</string>
 
     <!-- Forecast -->
@@ -94,5 +98,6 @@
     <string name="alert_none_title">এখন বন্যার ঝুঁকি নেই: %1$s</string>
     <string name="alert_at_location">আপনার অবস্থানে ঝুঁকি: %1$s%%।</string>
     <string name="alert_in_district">আপনার জেলায় সর্বোচ্চ ঝুঁকি: %1$s%%।</string>
+    <string name="alert_at_location_low">আপনার অবস্থানে ঝুঁকি: ১০%-এর কম।</string>
     <string name="alert_peak">সম্ভাব্য সর্বোচ্চ দিন %1$s।</string>
 </resources>

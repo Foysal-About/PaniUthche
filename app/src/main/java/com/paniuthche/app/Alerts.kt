@@ -47,7 +47,7 @@ suspend fun currentLocation(ctx: Context): Location? {
 }
 
 fun saveLocation(ctx: Context, lat: Double, lon: Double) =
-    settings(ctx).edit().putString("lat", lat.toString()).putString("lon", lon.toString()).apply()
+    settings(ctx).edit().putString("lat", lat.toString()).putString("lon", lon.toString()).commit()
 
 fun savedLocation(ctx: Context): Pair<Double, Double>? {
     val p = settings(ctx)
@@ -65,12 +65,13 @@ fun scheduleAlerts(ctx: Context) {
         .setConstraints(Constraints(requiredNetworkType = NetworkType.CONNECTED))
         .build()
     WorkManager.getInstance(ctx).enqueueUniquePeriodicWork(WORK_NAME, ExistingPeriodicWorkPolicy.KEEP, req)
-    settings(ctx).edit().putBoolean("alerts_on", true).apply()
+    // commit, not apply: these must survive the process being killed right after the tap.
+    settings(ctx).edit().putBoolean("alerts_on", true).commit()
 }
 
 fun cancelAlerts(ctx: Context) {
     WorkManager.getInstance(ctx).cancelUniqueWork(WORK_NAME)
-    settings(ctx).edit().putBoolean("alerts_on", false).apply()
+    settings(ctx).edit().putBoolean("alerts_on", false).commit()
 }
 
 /** Runs the check once and always notifies, so users (and judges) can see what an alert looks like. */
@@ -106,7 +107,7 @@ class AlertWorker(ctx: Context, params: WorkerParameters) : CoroutineWorker(ctx,
         val last = AlertLevel.valueOf(prefs.getString("last_alert", AlertLevel.NONE.name)!!)
         if (force || shouldNotify(level, last)) notify(ctx, district, level, prob, cell?.peakDate, location != null)
         // Recording drops too means a later rise alerts again.
-        prefs.edit().putString("last_alert", level.name).apply()
+        prefs.edit().putString("last_alert", level.name).commit()
         return Result.success()
     }
 }
@@ -134,7 +135,7 @@ private fun notify(ctx: Context, d: District, level: AlertLevel, prob: Double, p
     val bn = l.resources.configuration.locales[0].language == "bn"
     val pct = "${(prob * 100).toInt()}".let { if (bn) it.bn() else it }
     // Cells under 10% aren't published, so 0 at a location means "below 10%", not "zero".
-    val where = if (atLocation && prob == 0.0) l.getString(R.string.loc_risk_low) + "."
+    val where = if (atLocation && prob == 0.0) l.getString(R.string.alert_at_location_low)
         else l.getString(if (atLocation) R.string.alert_at_location else R.string.alert_in_district, pct)
     val peak = peakDate?.let { " " + l.getString(R.string.alert_peak, if (bn) it.bn() else it) }.orEmpty()
     val open = PendingIntent.getActivity(ctx, 0, Intent(ctx, MainActivity::class.java), PendingIntent.FLAG_IMMUTABLE)

@@ -4,7 +4,6 @@ import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
-import androidx.compose.animation.AnimatedContent
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.background
 import androidx.compose.foundation.horizontalScroll
@@ -122,7 +121,7 @@ class MainActivity : ComponentActivity() {
                 LocalizedContent(lang) {
                     App(onToggleLang = {
                         lang = if (lang == Lang.BN) Lang.EN else Lang.BN
-                        prefs.edit().putString("lang", lang.name).apply()
+                        prefs.edit().putString("lang", lang.name).commit()
                     })
                 }
             }
@@ -202,18 +201,33 @@ fun HomeScreen(onToggleLang: () -> Unit, onOpenMap: () -> Unit, vm: ForecastView
 
         AlertsCard(vm)
 
-        MlSummaryCard(vm.ml, onOpenMap)
-
-        AnimatedContent(vm.state, label = "forecast") { s ->
-            when (s) {
-                UiState.Loading -> Box(Modifier.fillMaxWidth().height(320.dp), Alignment.Center) { CircularProgressIndicator() }
-                is UiState.Error -> ErrorCard(s.message) { vm.load(vm.district) }
-                is UiState.Ready -> Column(verticalArrangement = Arrangement.spacedBy(16.dp)) {
-                    RiskHero(s.forecast)
-                    StatsRow(s.forecast)
-                    ChartCard(s.forecast, s.forecast.risk.style().color)
+        // One headline risk: the ML model (at the user's cell if located here, else the district's worst cell);
+        // the river-only rule is the fallback when the published forecast can't be loaded.
+        val ml = (vm.ml as? MlState.Ready)?.forecast
+        val river = (vm.state as? UiState.Ready)?.forecast
+        val here = vm.location?.takeIf { nearestDistrict(it.first, it.second) == vm.district }
+        when {
+            ml != null -> {
+                val prob = here?.let { riskAt(it.first, it.second, ml.cells) } ?: ml.summary?.maxProb ?: 0.0
+                val source = stringResource(if (here != null) R.string.src_ai_location else R.string.src_ai_district)
+                RiskHero(alertLevel(prob).toRisk(), source) { MlUpdatedLabel(ml, onDark = true) }
+                MlStats(ml.summary)
+                FilledTonalButton(onClick = onOpenMap) {
+                    Icon(Icons.Filled.Place, null, Modifier.size(18.dp))
+                    Spacer(Modifier.width(8.dp))
+                    Text(stringResource(R.string.ai_view_map))
                 }
             }
+            river != null && vm.ml is MlState.Error -> RiskHero(river.risk, stringResource(R.string.src_river))
+            vm.state is UiState.Error && vm.ml is MlState.Error ->
+                ErrorCard((vm.state as UiState.Error).message) { vm.load(vm.district) }
+            else -> Box(Modifier.fillMaxWidth().height(200.dp), Alignment.Center) { CircularProgressIndicator() }
+        }
+
+        if (river != null) {
+            Text(stringResource(R.string.river_title), style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.SemiBold)
+            StatsRow(river)
+            ChartCard(river, MaterialTheme.colorScheme.primary)
         }
 
         Row(
@@ -238,36 +252,21 @@ fun DistrictChips(vm: ForecastViewModel) =
         }
     }
 
-@Composable
-private fun MlSummaryCard(ml: MlState, onOpenMap: () -> Unit) {
-    Card(colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.primaryContainer)) {
-        Column(Modifier.fillMaxWidth().padding(16.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
-            Row(verticalAlignment = Alignment.CenterVertically) {
-                Text(stringResource(R.string.ai_title), Modifier.weight(1f), style = MaterialTheme.typography.titleMedium,
-                    fontWeight = FontWeight.SemiBold, color = MaterialTheme.colorScheme.onPrimaryContainer)
-                if (ml is MlState.Ready) MlUpdatedLabel(ml.forecast)
-            }
-            when (ml) {
-                MlState.Loading -> LinearProgressIndicator(Modifier.fillMaxWidth())
-                MlState.Error -> Text(stringResource(R.string.ai_error), style = MaterialTheme.typography.bodyMedium)
-                is MlState.Ready -> {
-                    MlStats(ml.forecast.summary)
-                    FilledTonalButton(onClick = onOpenMap) {
-                        Icon(Icons.Filled.Place, null, Modifier.size(18.dp))
-                        Spacer(Modifier.width(8.dp))
-                        Text(stringResource(R.string.ai_view_map))
-                    }
-                }
-            }
-        }
-    }
+private fun AlertLevel.toRisk() = when (this) {
+    AlertLevel.HIGH -> Risk.HIGH
+    AlertLevel.MEDIUM -> Risk.MEDIUM
+    AlertLevel.NONE -> Risk.LOW
 }
 
 @Composable
-fun MlUpdatedLabel(f: MlForecast) = Text(
+fun MlUpdatedLabel(f: MlForecast, onDark: Boolean = false) = Text(
     if (f.offline) stringResource(R.string.ai_offline) else stringResource(R.string.ai_updated, locDate(f.generated)),
     style = MaterialTheme.typography.labelSmall,
-    color = if (f.offline) MaterialTheme.colorScheme.error else MaterialTheme.colorScheme.onSurfaceVariant,
+    color = when {
+        onDark -> Color.White.copy(alpha = 0.85f)
+        f.offline -> MaterialTheme.colorScheme.error
+        else -> MaterialTheme.colorScheme.onSurfaceVariant
+    },
 )
 
 @Composable
@@ -282,8 +281,8 @@ fun MlStats(s: AreaSummary?) {
 }
 
 @Composable
-private fun RiskHero(f: Forecast) {
-    val st = f.risk.style()
+private fun RiskHero(risk: Risk, source: String, badge: @Composable () -> Unit = {}) {
+    val st = risk.style()
     Box(
         Modifier.fillMaxWidth().clip(RoundedCornerShape(24.dp))
             .background(Brush.linearGradient(listOf(st.color, st.color.copy(alpha = 0.75f))))
@@ -301,6 +300,10 @@ private fun RiskHero(f: Forecast) {
                 }
             }
             Text(stringResource(st.advice), style = MaterialTheme.typography.bodyLarge, color = Color.White)
+            Row(verticalAlignment = Alignment.CenterVertically) {
+                Text(source, Modifier.weight(1f), style = MaterialTheme.typography.labelMedium, color = Color.White.copy(alpha = 0.85f))
+                badge()
+            }
         }
     }
 }
