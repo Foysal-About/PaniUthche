@@ -68,6 +68,13 @@ forecasts. It shows where and when the model flags risk as a flood develops. It 
 `SosMessage` carries optional `lat`/`lon`. GPS warms up when the mesh starts; on send it waits up to 10 s, else sends
 without location. Received cards show coordinates + distance; tap opens a map app. Older messages without location still parse.
 
+## Done: AI made visible in the app
+
+- Map tab layers: Live risk / Flood-prone (AI) / Replay. Flood-prone shows the model's susceptibility per cell all year
+  (`forecast.py` writes `susceptibility_<area>.geojson`, 0.4–1.9 MB).
+- Forecast tab "How the AI works": held-out scores and feature importance from the published `metrics.json`,
+  plus buttons that open the replay and the flood-prone layer (`AiCard.kt`).
+
 ## Still missing
 
 - **Team of 3+ people** (blocking).

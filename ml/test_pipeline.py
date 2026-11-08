@@ -5,7 +5,8 @@ import numpy as np
 import pandas as pd
 
 import config as C
-from forecast import cell_polygon, lattice, nearest_lattice, rain_trigger, rain_windows, return_levels, river_trigger
+from forecast import (cell_polygon, lattice, nearest_lattice, rain_trigger, rain_windows, return_levels, river_trigger,
+                      susceptibility_geojson)
 from train import evaluate, fit, split_by_event
 
 
@@ -81,6 +82,14 @@ class TrainByEvent(unittest.TestCase):
 
     def test_feature_list_matches_categorical(self):
         self.assertTrue(set(C.CATEGORICAL) <= set(C.FEATURES))
+
+
+class SusceptibilityLayer(unittest.TestCase):
+    def test_draws_prone_cells_whatever_the_weather(self):
+        scored = pd.DataFrame({"longitude": [91.0, 91.01], "latitude": [24.0, 24.0], "susceptibility": [0.05, 0.876],
+                               "prob": [0.0, 0.0], "people": [5, 7]})
+        feats = susceptibility_geojson(scored)["features"]
+        self.assertEqual([f["properties"] for f in feats], [{"prob": 0.88, "people": 7}])
 
 
 class ReplayDay(unittest.TestCase):

@@ -1,6 +1,8 @@
 package com.paniuthche.app
 
 import androidx.compose.foundation.background
+import androidx.compose.foundation.horizontalScroll
+import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material3.*
@@ -45,8 +47,15 @@ private val replayDistrict = districts.first { it.key == "feni" }
 
 @Composable
 fun MapScreen(onToggleLang: () -> Unit, vm: ForecastViewModel = viewModel()) {
-    var replay by rememberSaveable { mutableStateOf(false) }
+    val ctx = LocalContext.current
+    val mode = vm.mapMode
     var replayCells by remember { mutableStateOf(emptyList<RiskCell>()) }
+    // The model's own output per cell; null while loading, empty on failure.
+    val prone by produceState<List<RiskCell>?>(null, mode == MapMode.PRONE, vm.district) {
+        if (mode != MapMode.PRONE) return@produceState
+        value = null
+        value = try { withContext(Dispatchers.IO) { fetchSusceptibility(ctx, vm.district) } } catch (e: Exception) { emptyList() }
+    }
     val ml = vm.ml
     Column(Modifier.fillMaxSize()) {
         Column(Modifier.padding(horizontal = 16.dp, vertical = 12.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
@@ -55,26 +64,52 @@ fun MapScreen(onToggleLang: () -> Unit, vm: ForecastViewModel = viewModel()) {
                     fontWeight = FontWeight.Bold, color = MaterialTheme.colorScheme.primary)
                 LangToggle(onToggleLang)
             }
-            FilterChip(selected = replay, onClick = { replay = !replay }, label = { Text(stringResource(R.string.replay_toggle)) })
-            if (replay) ReplayPanel(onCells = { replayCells = it })
-            else {
-                DistrictChips(vm)
-                when (ml) {
-                    MlState.Loading -> LinearProgressIndicator(Modifier.fillMaxWidth())
-                    MlState.Error -> Text(stringResource(R.string.ai_error), color = MaterialTheme.colorScheme.error)
-                    is MlState.Ready -> MlStats(ml.forecast.summary)
+            Row(Modifier.horizontalScroll(rememberScrollState()), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                listOf(MapMode.LIVE to R.string.map_live, MapMode.PRONE to R.string.map_prone, MapMode.REPLAY to R.string.replay_toggle)
+                    .forEach { (m, label) -> FilterChip(selected = mode == m, onClick = { vm.mapMode = m }, label = { Text(stringResource(label)) }) }
+            }
+            when (mode) {
+                MapMode.REPLAY -> ReplayPanel(onCells = { replayCells = it })
+                MapMode.PRONE -> {
+                    DistrictChips(vm)
+                    when {
+                        prone == null -> LinearProgressIndicator(Modifier.fillMaxWidth())
+                        prone!!.isEmpty() -> Text(stringResource(R.string.ai_error), color = MaterialTheme.colorScheme.error)
+                    }
+                }
+                MapMode.LIVE -> {
+                    DistrictChips(vm)
+                    when (ml) {
+                        MlState.Loading -> LinearProgressIndicator(Modifier.fillMaxWidth())
+                        MlState.Error -> Text(stringResource(R.string.ai_error), color = MaterialTheme.colorScheme.error)
+                        is MlState.Ready -> MlStats(ml.forecast.summary)
+                    }
                 }
             }
-            if (replay || ml is MlState.Ready) Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(12.dp)) {
+            val ready = when (mode) {
+                MapMode.REPLAY -> true
+                MapMode.PRONE -> !prone.isNullOrEmpty()
+                MapMode.LIVE -> ml is MlState.Ready
+            }
+            if (ready) Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(12.dp)) {
                 listOf("10–30%" to riskBands[2].second, "30–50%" to riskBands[1].second, "50%+" to riskBands[0].second)
                     .forEach { (label, color) -> LegendDot(color, label.loc()) }
                 Spacer(Modifier.weight(1f))
-                if (!replay && ml is MlState.Ready) MlUpdatedLabel(ml.forecast)
+                if (mode == MapMode.LIVE && ml is MlState.Ready) MlUpdatedLabel(ml.forecast)
             }
         }
-        val cells = if (replay) replayCells else (ml as? MlState.Ready)?.forecast?.cells.orEmpty()
-        RiskMap(if (replay) replayDistrict else vm.district, cells, vm.location, Modifier.weight(1f).fillMaxWidth())
-        Text(stringResource(if (replay) R.string.replay_note else R.string.map_note), Modifier.padding(horizontal = 16.dp, vertical = 8.dp),
+        val cells = when (mode) {
+            MapMode.REPLAY -> replayCells
+            MapMode.PRONE -> prone.orEmpty()
+            MapMode.LIVE -> (ml as? MlState.Ready)?.forecast?.cells.orEmpty()
+        }
+        RiskMap(if (mode == MapMode.REPLAY) replayDistrict else vm.district, cells, vm.location, Modifier.weight(1f).fillMaxWidth())
+        val note = when (mode) {
+            MapMode.REPLAY -> R.string.replay_note
+            MapMode.PRONE -> R.string.prone_note
+            MapMode.LIVE -> R.string.map_note
+        }
+        Text(stringResource(note), Modifier.padding(horizontal = 16.dp, vertical = 8.dp),
             style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
     }
 }

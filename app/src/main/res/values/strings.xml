@@ -110,4 +110,21 @@
     <string name="replay_note">Replay of the August 2024 Feni flood: observed GloFAS river flow and ERA5 rain run through the same model and alert rule. It uses observed data, not archived forecasts, so it does not show forecast lead time.</string>
     <string name="sos_no_location">Location unknown (no GPS fix)</string>
     <string name="sos_distance">%1$s km from you</string>
+    <string name="map_live">Live risk</string>
+    <string name="map_prone">Flood-prone (AI)</string>
+    <string name="prone_note">The AI model\'s own output: how easily each 1 km cell floods, learned from satellite flood maps of past floods. Terrain only, so it does not change with the weather. Live risk = this × river and rain triggers.</string>
+    <string name="ai_card_title">How the AI works</string>
+    <string name="ai_card_body">A machine-learning model (gradient boosting) learned which land floods from Sentinel-1 satellite radar maps of past floods. The forecast multiplies its flood-proneness for each cell by river-flow and rain triggers.</string>
+    <string name="ai_card_test">Tested on a flood it never saw (Feni 2024)</string>
+    <string name="ai_auc">Ranking score (AUC)</string>
+    <string name="ai_precision">Flagged cells that flooded</string>
+    <string name="ai_recall">Flooded cells it caught</string>
+    <string name="ai_importance">What the model relies on most</string>
+    <string name="feat_landcover">Land cover</string>
+    <string name="feat_hnd">Height above river</string>
+    <string name="feat_slope">Slope</string>
+    <string name="feat_dist_water">Distance to water</string>
+    <string name="feat_upa_log">Upstream area</string>
+    <string name="ai_open_replay">Watch it on the 2024 Feni flood</string>
+    <string name="ai_open_prone">See flood-prone areas</string>
 </resources>

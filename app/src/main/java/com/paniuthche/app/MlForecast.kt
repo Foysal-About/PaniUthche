@@ -80,3 +80,19 @@ fun fetchReplayTimeline(context: Context): List<ReplayDay> {
 
 fun fetchReplayCells(context: Context, date: String): List<RiskCell> =
     parseCells(fetchCached(context, "$REPLAY_DIR$date.geojson").first)
+
+/** The model's flood-proneness per cell (terrain only, same every day); `prob` holds the susceptibility. */
+fun fetchSusceptibility(context: Context, d: District): List<RiskCell> =
+    parseCells(fetchCached(context, "susceptibility_${d.key}.geojson").first)
+
+/** Held-out scores and permutation importance from ml/train.py. */
+data class ModelInfo(val auc: Double, val precision: Double, val recall: Double, val importance: List<Pair<String, Double>>)
+
+fun fetchModelInfo(context: Context): ModelInfo {
+    val m = JSONObject(fetchCached(context, "metrics.json").first)
+    val imp = m.getJSONObject("importance")
+    return ModelInfo(
+        m.getDouble("roc_auc"), m.getDouble("precision@0.5"), m.getDouble("recall@0.5"),
+        imp.keys().asSequence().map { it to imp.getDouble(it) }.sortedByDescending { it.second }.toList(),
+    )
+}

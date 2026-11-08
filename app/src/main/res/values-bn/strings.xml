@@ -110,4 +110,21 @@
     <string name="replay_note">আগস্ট ২০২৪-এর ফেনী বন্যার রিপ্লে: GloFAS-এর পর্যবেক্ষিত নদীপ্রবাহ ও ERA5 বৃষ্টি একই মডেল ও সতর্কতা নিয়মে চালানো হয়েছে। এটি পর্যবেক্ষিত তথ্য, আর্কাইভ করা পূর্বাভাস নয়, তাই কত আগে সতর্ক করা যেত তা দেখায় না।</string>
     <string name="sos_no_location">অবস্থান জানা নেই (জিপিএস পাওয়া যায়নি)</string>
     <string name="sos_distance">আপনার থেকে %1$s কিমি</string>
+    <string name="map_live">চলমান ঝুঁকি</string>
+    <string name="map_prone">বন্যাপ্রবণ এলাকা (এআই)</string>
+    <string name="prone_note">এআই মডেলের নিজস্ব ফলাফল: অতীত বন্যার স্যাটেলাইট মানচিত্র থেকে শেখা, প্রতিটি ১ কিমি এলাকা কত সহজে প্লাবিত হয়। শুধু ভূপ্রকৃতি থেকে, তাই আবহাওয়ায় বদলায় না। চলমান ঝুঁকি = এটি × নদী ও বৃষ্টির মাত্রা।</string>
+    <string name="ai_card_title">এআই কীভাবে কাজ করে</string>
+    <string name="ai_card_body">একটি মেশিন লার্নিং মডেল (গ্রেডিয়েন্ট বুস্টিং) অতীত বন্যার Sentinel-1 স্যাটেলাইট রাডার মানচিত্র থেকে শিখেছে কোন জমি প্লাবিত হয়। পূর্বাভাসে প্রতিটি এলাকার এই বন্যাপ্রবণতাকে নদীপ্রবাহ ও বৃষ্টির মাত্রা দিয়ে গুণ করা হয়।</string>
+    <string name="ai_card_test">যে বন্যা মডেল আগে দেখেনি তাতে পরীক্ষা (ফেনী ২০২৪)</string>
+    <string name="ai_auc">র‍্যাঙ্কিং স্কোর (AUC)</string>
+    <string name="ai_precision">চিহ্নিত এলাকা যা প্লাবিত হয়েছে</string>
+    <string name="ai_recall">প্লাবিত এলাকা যা ধরা পড়েছে</string>
+    <string name="ai_importance">মডেল যা সবচেয়ে বেশি দেখে</string>
+    <string name="feat_landcover">ভূমির ধরন</string>
+    <string name="feat_hnd">নদী থেকে উচ্চতা</string>
+    <string name="feat_slope">ঢাল</string>
+    <string name="feat_dist_water">পানি থেকে দূরত্ব</string>
+    <string name="feat_upa_log">উজানের এলাকা</string>
+    <string name="ai_open_replay">২০২৪ ফেনী বন্যায় এআই দেখুন</string>
+    <string name="ai_open_prone">বন্যাপ্রবণ এলাকা দেখুন</string>
 </resources>

@@ -53,6 +53,8 @@ sealed interface UiState {
     data class Error(val message: String?) : UiState
 }
 
+enum class MapMode { LIVE, PRONE, REPLAY }
+
 sealed interface MlState {
     data object Loading : MlState
     data class Ready(val forecast: MlForecast) : MlState
@@ -67,6 +69,8 @@ class ForecastViewModel(app: Application) : AndroidViewModel(app) {
     var ml by mutableStateOf<MlState>(MlState.Loading); private set
     var alertsOn by mutableStateOf(settings(app).getBoolean("alerts_on", false)); private set
     var locating by mutableStateOf(false); private set
+    /** Map tab layer; here so the Forecast tab can open the map on a given layer. */
+    var mapMode by mutableStateOf(MapMode.LIVE)
 
     init { load(district) }
 
@@ -212,7 +216,7 @@ fun HomeScreen(onToggleLang: () -> Unit, onOpenMap: () -> Unit, vm: ForecastView
                 val source = stringResource(if (here != null) R.string.src_ai_location else R.string.src_ai_district)
                 RiskHero(alertLevel(prob).toRisk(), source) { MlUpdatedLabel(ml, onDark = true) }
                 MlStats(ml.summary)
-                FilledTonalButton(onClick = onOpenMap) {
+                FilledTonalButton(onClick = { vm.mapMode = MapMode.LIVE; onOpenMap() }) {
                     Icon(Icons.Filled.Place, null, Modifier.size(18.dp))
                     Spacer(Modifier.width(8.dp))
                     Text(stringResource(R.string.ai_view_map))
@@ -223,6 +227,8 @@ fun HomeScreen(onToggleLang: () -> Unit, onOpenMap: () -> Unit, vm: ForecastView
                 ErrorCard((vm.state as UiState.Error).message) { vm.load(vm.district) }
             else -> Box(Modifier.fillMaxWidth().height(200.dp), Alignment.Center) { CircularProgressIndicator() }
         }
+
+        AiSection(vm, onOpenMap)
 
         if (river != null) {
             Text(stringResource(R.string.river_title), style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.SemiBold)

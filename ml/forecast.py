@@ -191,6 +191,16 @@ def to_geojson(scored: pd.DataFrame, first_day: date | None = None) -> dict:
     return {"type": "FeatureCollection", "features": feats}
 
 
+def susceptibility_geojson(scored: pd.DataFrame) -> dict:
+    """Flood-prone layer: the model's output alone, independent of weather (`prob` is susceptibility)."""
+    feats = [{
+        "type": "Feature",
+        "geometry": {"type": "Polygon", "coordinates": cell_polygon(r.longitude, r.latitude, C.GRID_SCALE_M)},
+        "properties": {"prob": round(float(r.susceptibility), 2), "people": int(r.people)},
+    } for r in scored.itertuples() if r.susceptibility >= MIN_PROB_TO_DRAW]
+    return {"type": "FeatureCollection", "features": feats}
+
+
 def main():
     model = joblib.load(os.path.join(C.MODEL_DIR, "flood_model.joblib"))
     os.makedirs(C.OUT_DIR, exist_ok=True)
@@ -204,6 +214,8 @@ def main():
         scored = score_area(model, grid, name, bbox)
         with open(os.path.join(C.OUT_DIR, f"risk_{name}.geojson"), "w") as f:
             json.dump(to_geojson(scored), f)
+        with open(os.path.join(C.OUT_DIR, f"susceptibility_{name}.geojson"), "w") as f:
+            json.dump(susceptibility_geojson(scored), f)
         exposed = scored[scored["prob"] >= EXPOSED_PROB]
         summary["areas"][name] = {
             "max_prob": round(float(scored["prob"].max()), 3),
