@@ -37,5 +37,7 @@ dependencies {
     implementation(libs.osmdroid)
     implementation(libs.androidx.work.runtime.ktx)
     testImplementation(libs.junit)
+    // Real org.json for JVM unit tests; android.jar only has stubs.
+    testImplementation(libs.org.json)
     debugImplementation(libs.androidx.compose.ui.tooling)
 }

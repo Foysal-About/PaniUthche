@@ -108,4 +108,6 @@
     <string name="replay_pause">থামান</string>
     <string name="replay_alert">সেদিনের সতর্কবার্তা দেখুন</string>
     <string name="replay_note">আগস্ট ২০২৪-এর ফেনী বন্যার রিপ্লে: GloFAS-এর পর্যবেক্ষিত নদীপ্রবাহ ও ERA5 বৃষ্টি একই মডেল ও সতর্কতা নিয়মে চালানো হয়েছে। এটি পর্যবেক্ষিত তথ্য, আর্কাইভ করা পূর্বাভাস নয়, তাই কত আগে সতর্ক করা যেত তা দেখায় না।</string>
+    <string name="sos_no_location">অবস্থান জানা নেই (জিপিএস পাওয়া যায়নি)</string>
+    <string name="sos_distance">আপনার থেকে %1$s কিমি</string>
 </resources>

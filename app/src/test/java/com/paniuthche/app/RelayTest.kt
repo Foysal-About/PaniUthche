@@ -10,5 +10,10 @@ class RelayTest {
     @Test fun newMessageForwardedWithHopIncrement() = assertEquals(1, relayCopy(msg, emptySet())?.hops)
     @Test fun duplicateDropped() = assertNull(relayCopy(msg, setOf("a")))
     @Test fun stopsAtMaxHops() = assertNull(relayCopy(msg.copy(hops = MAX_HOPS), emptySet()))
+    @Test fun locationSurvivesRoundTripAndRelay() {
+        val back = relayCopy(SosMessage.fromBytes(msg.copy(lat = 23.011, lon = 91.397).toBytes()), emptySet())!!
+        assertEquals(23.011 to 91.397, back.lat to back.lon)
+    }
+    @Test fun messageWithoutLocationStaysNull() = assertNull(SosMessage.fromBytes(msg.toBytes()).lat)
     @Test fun ownMessageStartsAtZeroHops() = assertEquals(0, relayCopy(msg.copy(hops = -1), emptySet())?.hops)
 }

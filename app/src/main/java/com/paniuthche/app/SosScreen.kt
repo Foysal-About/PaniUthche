@@ -31,6 +31,12 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.AndroidViewModel
+import androidx.lifecycle.viewModelScope
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.withTimeoutOrNull
+import android.content.Intent
+import android.net.Uri
+import androidx.compose.ui.platform.LocalContext
 import androidx.lifecycle.viewmodel.compose.viewModel
 import java.text.SimpleDateFormat
 import java.util.Date
@@ -39,10 +45,30 @@ import java.util.Locale
 class SosViewModel(app: Application) : AndroidViewModel(app) {
     val mesh = SosMesh(app)
     var running by mutableStateOf(false); private set
+    var sending by mutableStateOf(false); private set
+    /** This phone's latest fix, for distances to received SOS messages. */
+    var here by mutableStateOf<Pair<Double, Double>?>(null); private set
 
     fun toggle() {
-        if (running) mesh.stop() else mesh.start()
+        if (running) mesh.stop() else {
+            mesh.start()
+            // Warm up GPS now so a later SOS gets a fix fast; GPS needs no internet.
+            viewModelScope.launch { locate() }
+        }
         running = !running
+    }
+
+    // currentLocation reuses a fix up to 30 min old, else waits for a new one (capped here).
+    private suspend fun locate() = withTimeoutOrNull(10_000) { currentLocation(getApplication()) }
+        ?.let { (it.latitude to it.longitude).also { p -> here = p } }
+
+    fun send(msg: SosMessage) {
+        sending = true
+        viewModelScope.launch {
+            val p = locate()
+            mesh.send(msg.copy(lat = p?.first, lon = p?.second))
+            sending = false
+        }
     }
 
     override fun onCleared() = mesh.stop()
@@ -125,8 +151,8 @@ fun SosScreen(onToggleLang: () -> Unit, vm: SosViewModel = viewModel()) {
 
         item {
             Box(Modifier.fillMaxWidth(), Alignment.Center) {
-                SosButton(enabled = vm.running) {
-                    vm.mesh.send(SosMessage(people = people, elderly = elderly, children = children,
+                SosButton(enabled = vm.running && !vm.sending) {
+                    vm.send(SosMessage(people = people, elderly = elderly, children = children,
                         pregnant = pregnant, note = note.trim()))
                     note = ""
                 }
@@ -144,7 +170,7 @@ fun SosScreen(onToggleLang: () -> Unit, vm: SosViewModel = viewModel()) {
             Text(stringResource(R.string.no_messages), style = MaterialTheme.typography.bodyMedium,
                 color = MaterialTheme.colorScheme.onSurfaceVariant)
         }
-        items(vm.mesh.messages, key = { it.id }) { SosCard(it) }
+        items(vm.mesh.messages, key = { it.id }) { SosCard(it, vm.here) }
     }
 }
 
@@ -211,7 +237,7 @@ private fun SosButton(enabled: Boolean, onClick: () -> Unit) {
 }
 
 @Composable
-private fun SosCard(m: SosMessage) {
+private fun SosCard(m: SosMessage, here: Pair<Double, Double>?) {
     val time = SimpleDateFormat("HH:mm", Locale.US).format(Date(m.createdAt)).loc()
     val flags = listOfNotNull(
         stringResource(R.string.elderly).takeIf { m.elderly },
@@ -236,10 +262,28 @@ private fun SosCard(m: SosMessage) {
                     }
                 }
                 if (m.note.isNotEmpty()) Text(m.note, style = MaterialTheme.typography.bodyMedium)
+                SosLocation(m, here)
                 Text(if (m.hops == 0) stringResource(R.string.sent_from_here)
                     else stringResource(R.string.hops_away, m.hops.toString().loc()),
                     style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
             }
         }
     }
+}
+
+/** Coordinates and distance from this phone; tap opens any installed map app (offline maps work). */
+@Composable
+private fun SosLocation(m: SosMessage, here: Pair<Double, Double>?) {
+    val ctx = LocalContext.current
+    if (m.lat == null || m.lon == null) {
+        Text(stringResource(R.string.sos_no_location), style = MaterialTheme.typography.bodySmall,
+            color = MaterialTheme.colorScheme.onSurfaceVariant)
+        return
+    }
+    val coords = "%.5f, %.5f".format(Locale.US, m.lat, m.lon)
+    val km = here?.takeIf { m.hops > 0 }?.let { distanceKm(it.first, it.second, m.lat, m.lon) }
+    val text = coords.loc() + km?.let { " · " + stringResource(R.string.sos_distance, "%.1f".format(Locale.US, it).loc()) }.orEmpty()
+    Text("📍 $text", Modifier.clickable {
+        runCatching { ctx.startActivity(Intent(Intent.ACTION_VIEW, Uri.parse("geo:${m.lat},${m.lon}?q=${m.lat},${m.lon}(SOS)"))) }
+    }, style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.primary)
 }

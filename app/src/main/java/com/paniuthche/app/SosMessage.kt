@@ -14,10 +14,14 @@ data class SosMessage(
     val note: String,
     val createdAt: Long = System.currentTimeMillis(),
     val hops: Int = 0,
+    /** Sender's GPS fix; null when the phone had no fix within the send timeout. */
+    val lat: Double? = null,
+    val lon: Double? = null,
 ) {
     fun toBytes(): ByteArray = JSONObject()
         .put("id", id).put("people", people).put("elderly", elderly).put("children", children)
         .put("pregnant", pregnant).put("note", note).put("createdAt", createdAt).put("hops", hops)
+        .apply { if (lat != null && lon != null) put("lat", lat).put("lon", lon) }
         .toString().toByteArray()
 
     companion object {
@@ -26,6 +30,8 @@ data class SosMessage(
                 id = getString("id"), people = getInt("people"), elderly = getBoolean("elderly"),
                 children = getBoolean("children"), pregnant = getBoolean("pregnant"),
                 note = getString("note"), createdAt = getLong("createdAt"), hops = getInt("hops"),
+                // has(): messages from older app versions carry no location.
+                lat = if (has("lat")) getDouble("lat") else null, lon = if (has("lon")) getDouble("lon") else null,
             )
         }
     }
