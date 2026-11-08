@@ -1,0 +1,18 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- A drop with water rising inside it: "pani uthche" (the water is rising). -->
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="108dp" android:height="108dp"
+    android:viewportWidth="108" android:viewportHeight="108">
+    <path android:fillColor="#FFFFFFFF"
+        android:pathData="M54,22 C48,31 33,48 33,66 A21,21 0 0,0 75,66 C75,48 60,31 54,22 Z" />
+    <group>
+        <clip-path android:pathData="M54,22 C48,31 33,48 33,66 A21,21 0 0,0 75,66 C75,48 60,31 54,22 Z" />
+        <path android:fillColor="#FF7FC1F5"
+            android:pathData="M26,58 Q33,53 40,58 T54,58 T68,58 T82,58 V92 H26 Z" />
+        <path android:fillColor="#FF0B5FA5"
+            android:pathData="M22,64 Q29,69 36,64 T50,64 T64,64 T78,64 V92 H22 Z" />
+    </group>
+    <!-- white rim keeps the drop's edge visible where dark water meets the dark background -->
+    <path android:strokeColor="#FFFFFFFF" android:strokeWidth="3" android:strokeLineJoin="round"
+        android:pathData="M54,22 C48,31 33,48 33,66 A21,21 0 0,0 75,66 C75,48 60,31 54,22 Z" />
+</vector>
