@@ -49,7 +49,8 @@ private val replayDistrict = districts.first { it.key == "feni" }
 fun MapScreen(onToggleLang: () -> Unit, vm: ForecastViewModel = viewModel()) {
     val ctx = LocalContext.current
     val mode = vm.mapMode
-    var replayCells by remember { mutableStateOf(emptyList<RiskCell>()) }
+    // null until the replay's first day has loaded.
+    var replayCells by remember { mutableStateOf<List<RiskCell>?>(null) }
     // The model's own output per cell; null while loading, empty on failure.
     val prone by produceState<List<RiskCell>?>(null, mode == MapMode.PRONE, vm.district) {
         if (mode != MapMode.PRONE) return@produceState
@@ -72,15 +73,12 @@ fun MapScreen(onToggleLang: () -> Unit, vm: ForecastViewModel = viewModel()) {
                 MapMode.REPLAY -> ReplayPanel(onCells = { replayCells = it })
                 MapMode.PRONE -> {
                     DistrictChips(vm)
-                    when {
-                        prone == null -> LinearProgressIndicator(Modifier.fillMaxWidth())
-                        prone!!.isEmpty() -> Text(stringResource(R.string.ai_error), color = MaterialTheme.colorScheme.error)
-                    }
+                    if (prone?.isEmpty() == true) Text(stringResource(R.string.ai_error), color = MaterialTheme.colorScheme.error)
                 }
                 MapMode.LIVE -> {
                     DistrictChips(vm)
                     when (ml) {
-                        MlState.Loading -> LinearProgressIndicator(Modifier.fillMaxWidth())
+                        MlState.Loading -> {}
                         MlState.Error -> Text(stringResource(R.string.ai_error), color = MaterialTheme.colorScheme.error)
                         is MlState.Ready -> MlStats(ml.forecast.summary)
                     }
@@ -99,11 +97,19 @@ fun MapScreen(onToggleLang: () -> Unit, vm: ForecastViewModel = viewModel()) {
             }
         }
         val cells = when (mode) {
-            MapMode.REPLAY -> replayCells
+            MapMode.REPLAY -> replayCells.orEmpty()
             MapMode.PRONE -> prone.orEmpty()
             MapMode.LIVE -> (ml as? MlState.Ready)?.forecast?.cells.orEmpty()
         }
-        RiskMap(if (mode == MapMode.REPLAY) replayDistrict else vm.district, cells, vm.location, Modifier.weight(1f).fillMaxWidth())
+        val loading = when (mode) {
+            MapMode.REPLAY -> replayCells == null
+            MapMode.PRONE -> prone == null
+            MapMode.LIVE -> ml is MlState.Loading
+        }
+        Box(Modifier.weight(1f).fillMaxWidth(), Alignment.Center) {
+            RiskMap(if (mode == MapMode.REPLAY) replayDistrict else vm.district, cells, vm.location, Modifier.fillMaxSize())
+            if (loading) WaterLoaderCard(stringResource(R.string.loading_map))
+        }
         val note = when (mode) {
             MapMode.REPLAY -> R.string.replay_note
             MapMode.PRONE -> R.string.prone_note
@@ -122,8 +128,12 @@ private fun ReplayPanel(onCells: (List<RiskCell>) -> Unit) {
         value = try { withContext(Dispatchers.IO) { fetchReplayTimeline(ctx) } } catch (e: Exception) { emptyList() }
     }
     val days = timeline
-    if (days == null) { LinearProgressIndicator(Modifier.fillMaxWidth()); return }
-    if (days.isEmpty()) { Text(stringResource(R.string.ai_error), color = MaterialTheme.colorScheme.error); return }
+    if (days == null) return  // the map shows the loader meanwhile
+    if (days.isEmpty()) {
+        LaunchedEffect(Unit) { onCells(emptyList()) }  // stop the map loader
+        Text(stringResource(R.string.ai_error), color = MaterialTheme.colorScheme.error)
+        return
+    }
 
     var index by rememberSaveable { mutableIntStateOf(0) }
     var playing by remember { mutableStateOf(false) }

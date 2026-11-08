@@ -127,4 +127,18 @@
     <string name="feat_upa_log">উজানের এলাকা</string>
     <string name="ai_open_replay">২০২৪ ফেনী বন্যায় এআই দেখুন</string>
     <string name="ai_open_prone">বন্যাপ্রবণ এলাকা দেখুন</string>
+    <string name="loading_forecast">নদী ও বৃষ্টির তথ্য দেখা হচ্ছে…</string>
+    <string name="loading_map">বন্যা মানচিত্র লোড হচ্ছে…</string>
+    <string name="onb_welcome_title">পানি ওঠার আগেই জানুন</string>
+    <string name="onb_welcome_body">বাংলাদেশের জন্য বন্যার আগাম সতর্কতা, বাংলা ও ইংরেজিতে। বিনামূল্যে, সবচেয়ে বন্যাপ্রবণ জেলাগুলোর জন্য তৈরি।</string>
+    <string name="onb_ai_title">এআই বন্যা মানচিত্র</string>
+    <string name="onb_ai_body">অতীত বন্যার স্যাটেলাইট মানচিত্রে প্রশিক্ষিত একটি মডেল নদী ও বৃষ্টির পূর্বাভাস দিয়ে আগামী ৭ দিনের জন্য প্রতিটি ১ কিমি এলাকার ঝুঁকি হিসাব করে।</string>
+    <string name="onb_sos_title">ইন্টারনেট ছাড়াই SOS</string>
+    <string name="onb_sos_body">নেটওয়ার্ক না থাকলেও আপনার অবস্থানসহ সাহায্যের অনুরোধ পাঠান। ব্লুটুথ ও ওয়াই-ফাই দিয়ে ফোন থেকে ফোনে পৌঁছে যায়, যতক্ষণ না কেউ সাহায্য করতে পারে।</string>
+    <string name="onb_alerts_title">আপনার জায়গার সতর্কতা</string>
+    <string name="onb_alerts_body">অ্যাপটি প্রতি ৬ ঘণ্টায় পূর্বাভাস দেখে এবং আপনার অবস্থানে ঝুঁকি বাড়লে জানায়। SOS না পাঠালে আপনার অবস্থান ফোনেই থাকে।</string>
+    <string name="onb_next">পরবর্তী</string>
+    <string name="onb_skip">এড়িয়ে যান</string>
+    <string name="onb_enable_alerts">বন্যা সতর্কতা চালু করুন</string>
+    <string name="onb_not_now">এখন নয়</string>
 </resources>

@@ -127,4 +127,18 @@
     <string name="feat_upa_log">Upstream area</string>
     <string name="ai_open_replay">Watch it on the 2024 Feni flood</string>
     <string name="ai_open_prone">See flood-prone areas</string>
+    <string name="loading_forecast">Checking rivers and rain…</string>
+    <string name="loading_map">Loading flood map…</string>
+    <string name="onb_welcome_title">Know before the water rises</string>
+    <string name="onb_welcome_body">Flood early warning for Bangladesh, in Bangla and English. Free, and built for the districts that flood most.</string>
+    <string name="onb_ai_title">AI flood map</string>
+    <string name="onb_ai_body">A model trained on satellite maps of past floods scores every 1 km area for the next 7 days, using river and rain forecasts.</string>
+    <string name="onb_sos_title">SOS without internet</string>
+    <string name="onb_sos_body">When networks fail, send a help request with your location. It hops phone to phone over Bluetooth and Wi-Fi until someone can help.</string>
+    <string name="onb_alerts_title">Alerts for where you are</string>
+    <string name="onb_alerts_body">The app checks the forecast every 6 hours and notifies you when risk rises at your location. Your location stays on your phone unless you send an SOS.</string>
+    <string name="onb_next">Next</string>
+    <string name="onb_skip">Skip</string>
+    <string name="onb_enable_alerts">Turn on flood alerts</string>
+    <string name="onb_not_now">Not now</string>
 </resources>

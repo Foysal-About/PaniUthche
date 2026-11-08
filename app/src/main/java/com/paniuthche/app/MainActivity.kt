@@ -121,11 +121,17 @@ class MainActivity : ComponentActivity() {
         val prefs = getSharedPreferences("settings", MODE_PRIVATE)
         setContent {
             var lang by remember { mutableStateOf(Lang.valueOf(prefs.getString("lang", null) ?: Lang.BN.name)) }
+            var onboarded by remember { mutableStateOf(prefs.getBoolean("onboarded", false)) }
+            val toggleLang = {
+                lang = if (lang == Lang.BN) Lang.EN else Lang.BN
+                prefs.edit().putString("lang", lang.name).commit()
+            }
             PaniTheme {
                 LocalizedContent(lang) {
-                    App(onToggleLang = {
-                        lang = if (lang == Lang.BN) Lang.EN else Lang.BN
-                        prefs.edit().putString("lang", lang.name).commit()
+                    if (onboarded) App(onToggleLang = { toggleLang() })
+                    else Onboarding(onToggleLang = { toggleLang() }, onDone = {
+                        prefs.edit().putBoolean("onboarded", true).commit()
+                        onboarded = true
                     })
                 }
             }
@@ -225,7 +231,9 @@ fun HomeScreen(onToggleLang: () -> Unit, onOpenMap: () -> Unit, vm: ForecastView
             river != null && vm.ml is MlState.Error -> RiskHero(river.risk, stringResource(R.string.src_river))
             vm.state is UiState.Error && vm.ml is MlState.Error ->
                 ErrorCard((vm.state as UiState.Error).message) { vm.load(vm.district) }
-            else -> Box(Modifier.fillMaxWidth().height(200.dp), Alignment.Center) { CircularProgressIndicator() }
+            else -> Box(Modifier.fillMaxWidth().height(240.dp), Alignment.Center) {
+                WaterLoader(stringResource(R.string.loading_forecast), size = 96.dp)
+            }
         }
 
         AiSection(vm, onOpenMap)
