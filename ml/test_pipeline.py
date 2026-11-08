@@ -83,5 +83,19 @@ class TrainByEvent(unittest.TestCase):
         self.assertTrue(set(C.CATEGORICAL) <= set(C.FEATURES))
 
 
+class ReplayDay(unittest.TestCase):
+    def test_day_row_counts_exposed_cells_and_matches_app_alert_thresholds(self):
+        from datetime import date
+        from replay import alert_level, day_row, nearest_cell
+        self.assertEqual([alert_level(p) for p in (0.29, 0.3, 0.49, 0.5)], ["NONE", "MEDIUM", "MEDIUM", "HIGH"])
+        scored = pd.DataFrame({"latitude": [23.0, 23.01, 23.02], "longitude": [91.4] * 3, "prob": [0.2, 0.6, 0.35],
+                               "people": [10, 20, 30], "cropland_ha": [1.0, 2.0, 3.0], "buildings": [1, 2, 3]})
+        town = nearest_cell(scored, 23.019, 91.4)
+        row = day_row(date(2024, 8, 19), scored, town, 1.04, 198.4)
+        self.assertEqual(town, 2)
+        self.assertEqual((row["cells_at_risk"], row["people_exposed"]), (1, 20))
+        self.assertEqual((row["district_alert"], row["town_alert"]), ("HIGH", "MEDIUM"))
+
+
 if __name__ == "__main__":
     unittest.main()

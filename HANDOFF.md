@@ -19,7 +19,7 @@ in progress when the session was cleared, and the gotchas that cost time.
 
 **Pani Uthche** ("the water is rising"): an Android flood early-warning app for Bangladesh, plus an ML pipeline.
 
-- Repo: `~/PaniUthche`, GitHub `Foysal-About/PaniUthche` (public), branch `main`.
+- Repo: `~/StudioProjects/PaniUthche`, GitHub `Foysal-About/PaniUthche` (public), branch `main`.
 - Live ML output (GitHub Pages, rebuilt 06:30 and 18:30 BST by `.github/workflows/forecast.yml`):
   `https://foysal-about.github.io/PaniUthche/summary.json`, `risk_<area>.geojson`, `metrics.json`.
 
@@ -49,47 +49,30 @@ Unit tests: `RiskTest`, `RelayTest`, `GeoTest` (15 tests).
 - Files: `config.py`, `build_dataset.py` (Earth Engine export), `train.py`, `forecast.py`, `test_pipeline.py`, `README.md`.
 - Earth Engine project: `idyllic-creek-446208-a1` (non-commercial, Community tier, registered as BRAC University student).
 
-## IN PROGRESS when cleared: Feni Aug 2024 replay (uncommitted)
+## Done: Feni Aug 2024 replay
 
-Goal: a day-by-day replay of the Aug 2024 Feni flood through the same model and alert rules, for the demo video
-and as evidence. Shown in the app as a replay mode on the map (date slider, play button, "show alert as on that day").
-
-**Done (uncommitted, in `ml/forecast.py` and `ml/test_pipeline.py`):**
-- Found a real flaw: the river trigger used a 90-day-median baseline, which saturates for weeks in every monsoon
-  (Feni was already 3x "normal" on Aug 10, nine days before the flood). Replaced with **return periods**:
-  river trigger 0 at the 2-year flow (Q2, ~bankfull), 1 at the 10-year flow (Q10), from 1994–2023 GloFAS annual maxima
-  at one fixed main-river cell per district, cached in `ml/data/river_ref.json`.
-- Rain trigger now 0 at 88 mm/3 days (two BMD "heavy" days) and 1 at 264 mm (three BMD "very heavy" days).
-- Refactored: `build_river_reference`, `river_reference` (cache), `river_flows`, `river_triggers`, `fetch_rain(points, url, **window)`,
-  `daily_risk(...)` shared by live forecast and replay; `score_area(model, grid, name, bbox)`; `to_geojson(scored, first_day)`.
-- Tests updated (10 ML tests pass).
-
-**Feni 2024 data already checked (main-river cell):** Q2 = 263, Q10 = 381 m³/s. Flow stayed below Q2 Aug 10–18,
-crossed it on **Aug 19** (1.04x Q2), peaked Aug 22–23 (~1.47x Q2, about Q10). ERA5 rain at Feni town: 102 mm on Aug 16, 84 mm on Aug 19.
-
-**Not done yet:**
-1. `ml/data/river_ref.json` only has **sylhet and sunamganj**. Kurigram, Feni, Sirajganj failed with Open-Meteo
-   **"Hourly API request limit exceeded"**. Re-run when the limit resets:
-   `cd ml && .venv/bin/python -c "import forecast as F, config as C; [print(n, F.river_reference(n, b)) for n, b in C.AREAS.items()]"`
-2. Write `ml/replay.py`: for Aug 12–28 2024 in Feni, `river_triggers(ref, start_date, end_date)` + ERA5 rain from
-   `https://archive-api.open-meteo.com/v1/archive` (`fetch_rain(..., url=ARCHIVE, start_date=start-7d, end_date=end)`)
-   -> `daily_risk` -> `ml/replay/feni_2024/<date>.geojson` + `timeline.json` (per day: max risk, cells/people/cropland/buildings
-   exposed at >= 0.5, risk at Feni town 23.011,91.397, alert level, Q/Q2, 3-day rain). Commit outputs.
-3. Workflow: add `cp -r replay out/` before upload so the replay is published on Pages.
-4. App: replay mode on the Map tab (load `timeline.json` + day files via the cached fetcher, slider + auto-play, stats for the day,
-   button to post the alert as it would have looked; reuse `notify()` in `Alerts.kt`, make it internal).
-5. Run `forecast.py` locally, run all tests, check on emulator, then commit and push.
-
-**Do not push `ml/forecast.py` until `river_ref.json` has all 5 areas.** Otherwise the CI job builds the missing
-references itself and may hit the same Open-Meteo limit.
+- Triggers use return periods (river 0 at Q2, 1 at Q10; rain 0 at 88 mm/3 days, 1 at 264 mm). `ml/data/river_ref.json` has all 5 areas.
+- `ml/replay.py` -> `ml/replay/feni_2024/<date>.geojson` + `timeline.json` (Aug 12–28 2024, GloFAS reanalysis + ERA5).
+  Published on Pages: `forecast.py` copies `replay/` into `out/` (the workflow file is unchanged).
+- App: Map tab has a "Replay: Feni flood, Aug 2024" chip with day slider, play, day stats, and "show alert as on this day".
+- Result: district alert MEDIUM Aug 18, HIGH Aug 19 (river crossed Q2) to Aug 28; up to 1.38 M people in cells >= 50%.
+- **Model flaw found:** built-up cells score ~0.15 (cropland 0.8–0.9), so Feni town's own cell never passes 16% and a
+  located user in town gets no alert. Likely cause: Sentinel-1 misses water between buildings, so urban flooding is
+  under-labelled. Documented in `ml/README.md`; not fixed.
 
 **Be honest in the write-up:** the replay uses *observed* river flow and rain (GloFAS reanalysis, ERA5), not archived
 forecasts. It shows where and when the model flags risk as a flood develops. It does not measure forecast lead time.
 
-## Still missing (after the replay)
+## Done: GPS in SOS messages
+
+`SosMessage` carries optional `lat`/`lon`. GPS warms up when the mesh starts; on send it waits up to 10 s, else sends
+without location. Received cards show coordinates + distance; tap opens a map app. Older messages without location still parse.
+
+## Still missing
 
 - **Team of 3+ people** (blocking).
-- SOS: real-phone test, GPS in messages, save/upload messages; recheck SOS tab in dark mode and Bangla.
+- Urban under-prediction (above).
+- SOS: real-phone test (two devices), save/upload messages, fix age in messages; recheck SOS tab in dark mode and Bangla.
 - Livestock exposure (no gridded livestock dataset in Earth Engine).
 - Release APK + download link (GitHub Releases).
 - ML: eyeball Sentinel-1 labels; recall is low at 0.5.
@@ -101,7 +84,7 @@ forecasts. It shows where and when the model flags risk as a flood develops. It 
 
 ```sh
 # Android build + tests (JDK from Android Studio)
-cd ~/PaniUthche && export JAVA_HOME="/Applications/Android Studio.app/Contents/jbr/Contents/Home"
+cd ~/StudioProjects/PaniUthche && export JAVA_HOME="/Applications/Android Studio.app/Contents/jbr/Contents/Home"
 ./gradlew testDebugUnitTest assembleDebug -q
 ~/Library/Android/sdk/platform-tools/adb install -r app/build/outputs/apk/debug/app-debug.apk
 
@@ -110,12 +93,13 @@ cd ~/PaniUthche && export JAVA_HOME="/Applications/Android Studio.app/Contents/j
 ~/Library/Android/sdk/platform-tools/adb emu geo fix 91.397 23.011
 
 # ML
-cd ~/PaniUthche/ml
+cd ~/StudioProjects/PaniUthche/ml
 .venv/bin/python -m unittest test_pipeline
 .venv/bin/python build_dataset.py samples   # Earth Engine; ~30 s
 .venv/bin/python train.py
 .venv/bin/python build_dataset.py grid      # Earth Engine; ~10 min (0.1 degree tiles)
 .venv/bin/python forecast.py
+.venv/bin/python replay.py                  # Feni 2024 replay; commit its outputs
 ```
 
 ## Gotchas that cost time

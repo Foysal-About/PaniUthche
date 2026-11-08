@@ -103,4 +103,9 @@
     <string name="alert_in_district">Highest risk in your district: %1$s%%.</string>
     <string name="alert_at_location_low">Risk at your location: below 10%.</string>
     <string name="alert_peak">Peak expected %1$s.</string>
+    <string name="replay_toggle">Replay: Feni flood, Aug 2024</string>
+    <string name="replay_play">Play</string>
+    <string name="replay_pause">Pause</string>
+    <string name="replay_alert">Show alert as on this day</string>
+    <string name="replay_note">Replay of the August 2024 Feni flood: observed GloFAS river flow and ERA5 rain run through the same model and alert rule. It uses observed data, not archived forecasts, so it does not show forecast lead time.</string>
 </resources>

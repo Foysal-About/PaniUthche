@@ -29,7 +29,7 @@ data class MlForecast(
 
 /** Downloads [name] and saves a copy; falls back to the saved copy when offline. */
 private fun fetchCached(context: Context, name: String): Pair<String, Boolean> {
-    val file = File(context.filesDir, "ml_$name")
+    val file = File(context.filesDir, "ml_" + name.replace('/', '_'))
     return try {
         URL(ML_BASE_URL + name).readText().also { file.writeText(it) } to false
     } catch (e: IOException) {
@@ -42,15 +42,19 @@ fun fetchMlForecast(context: Context, d: District): MlForecast {
     val (summaryText, summaryOffline) = fetchCached(context, "summary.json")
     val (cellsText, cellsOffline) = fetchCached(context, "risk_${d.key}.geojson")
     val summary = JSONObject(summaryText)
-    val area = summary.getJSONObject("areas").optJSONObject(d.key)?.let {
-        AreaSummary(
-            it.getDouble("max_prob"), it.getInt("cells_at_risk"), it.getInt("people_exposed"),
-            // opt*: older cached summaries don't have the asset fields yet.
-            it.optInt("cropland_ha_exposed"), it.optInt("buildings_exposed"),
-        )
-    }
-    val features = JSONObject(cellsText).getJSONArray("features")
-    val cells = List(features.length()) { i ->
+    val area = summary.getJSONObject("areas").optJSONObject(d.key)?.let(::parseSummary)
+    return MlForecast(summary.getString("generated"), area, parseCells(cellsText), summaryOffline || cellsOffline)
+}
+
+private fun parseSummary(it: JSONObject) = AreaSummary(
+    it.getDouble("max_prob"), it.getInt("cells_at_risk"), it.getInt("people_exposed"),
+    // opt*: older cached summaries don't have the asset fields yet.
+    it.optInt("cropland_ha_exposed"), it.optInt("buildings_exposed"),
+)
+
+private fun parseCells(geojson: String): List<RiskCell> {
+    val features = JSONObject(geojson).getJSONArray("features")
+    return List(features.length()) { i ->
         val f = features.getJSONObject(i)
         val coords = f.getJSONObject("geometry").getJSONArray("coordinates").getJSONArray(0)
         val props = f.getJSONObject("properties")
@@ -62,5 +66,17 @@ fun fetchMlForecast(context: Context, d: District): MlForecast {
             peakDate = props.optString("peak_date"),
         )
     }
-    return MlForecast(summary.getString("generated"), area, cells, summaryOffline || cellsOffline)
 }
+
+// The Aug 2024 Feni flood run day by day through the same model on observed flow and rain (ml/replay.py).
+private const val REPLAY_DIR = "replay/feni_2024/"
+
+data class ReplayDay(val date: String, val summary: AreaSummary)
+
+fun fetchReplayTimeline(context: Context): List<ReplayDay> {
+    val days = JSONObject(fetchCached(context, REPLAY_DIR + "timeline.json").first).getJSONArray("days")
+    return List(days.length()) { i -> days.getJSONObject(i).let { ReplayDay(it.getString("date"), parseSummary(it)) } }
+}
+
+fun fetchReplayCells(context: Context, date: String): List<RiskCell> =
+    parseCells(fetchCached(context, "$REPLAY_DIR$date.geojson").first)

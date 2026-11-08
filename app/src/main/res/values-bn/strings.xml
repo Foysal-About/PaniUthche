@@ -103,4 +103,9 @@
     <string name="alert_in_district">আপনার জেলায় সর্বোচ্চ ঝুঁকি: %1$s%%।</string>
     <string name="alert_at_location_low">আপনার অবস্থানে ঝুঁকি: ১০%-এর কম।</string>
     <string name="alert_peak">সম্ভাব্য সর্বোচ্চ দিন %1$s।</string>
+    <string name="replay_toggle">রিপ্লে: ফেনী বন্যা, আগস্ট ২০২৪</string>
+    <string name="replay_play">চালান</string>
+    <string name="replay_pause">থামান</string>
+    <string name="replay_alert">সেদিনের সতর্কবার্তা দেখুন</string>
+    <string name="replay_note">আগস্ট ২০২৪-এর ফেনী বন্যার রিপ্লে: GloFAS-এর পর্যবেক্ষিত নদীপ্রবাহ ও ERA5 বৃষ্টি একই মডেল ও সতর্কতা নিয়মে চালানো হয়েছে। এটি পর্যবেক্ষিত তথ্য, আর্কাইভ করা পূর্বাভাস নয়, তাই কত আগে সতর্ক করা যেত তা দেখায় না।</string>
 </resources>

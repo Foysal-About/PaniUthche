@@ -12,6 +12,7 @@ risk(cell, day) = susceptibility(cell) x trigger(cell, day)
 import json
 import math
 import os
+import shutil
 from datetime import date, timedelta
 
 import joblib
@@ -214,6 +215,9 @@ def main():
         print(name, summary["areas"][name])
     with open(os.path.join(C.OUT_DIR, "summary.json"), "w") as f:
         json.dump(summary, f, indent=2)
+    # Publish the committed flood replay (replay.py) with the forecast; the workflow uploads out/ as-is.
+    if os.path.isdir("replay"):
+        shutil.copytree("replay", os.path.join(C.OUT_DIR, "replay"), dirs_exist_ok=True)
 
 
 if __name__ == "__main__":

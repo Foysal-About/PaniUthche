@@ -119,7 +119,7 @@ private fun localized(ctx: Context): Context {
 }
 
 @SuppressLint("MissingPermission")
-private fun notify(ctx: Context, d: District, level: AlertLevel, prob: Double, peakDate: String?, atLocation: Boolean) {
+internal fun notify(ctx: Context, d: District, level: AlertLevel, prob: Double, peakDate: String?, atLocation: Boolean) {
     if (Build.VERSION.SDK_INT >= 33 && !hasPermission(ctx, Manifest.permission.POST_NOTIFICATIONS)) return
     val l = localized(ctx)
     val nm = ctx.getSystemService(NotificationManager::class.java)
